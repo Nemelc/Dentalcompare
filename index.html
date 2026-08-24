@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dentaire Comparatif — Le comparateur de matériel dentaire pour cabinets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F7F6;
+    --card: #FFFFFF;
+    --ink: #16241F;
+    --ink-soft: #57655F;
+    --line: #DEE4E1;
+    --teal: #1F6F63;
+    --teal-soft: #E4EFEC;
+    --mauve: #B96C86;
+    --mauve-soft: #F6E9ED;
+    --steel: #7C8B92;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; }
+
+  header.top{
+    background:var(--ink);
+    color:#F6F7F6;
+    padding:14px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:-0.01em;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+    color:inherit;
+  }
+  .brand .mark{
+    width:26px;height:26px;
+    border:2px solid #F6F7F6;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .brand small{
+    display:block;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:400;
+    font-size:10.5px;
+    color:#B9C4BF;
+    letter-spacing:0.02em;
+  }
+  .search-bar{
+    flex:1;
+    max-width:440px;
+    display:flex;
+    align-items:center;
+    background:#233830;
+    border-radius:7px;
+    padding:9px 14px;
+    gap:8px;
+  }
+  .search-bar input{
+    background:none;
+    border:none;
+    outline:none;
+    color:#fff;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    flex:1;
+  }
+  .search-bar input::placeholder{ color:#8FA39C; }
+  .top-note{
+    font-size:11.5px;
+    color:#B9C4BF;
+    font-family:'IBM Plex Mono', monospace;
+    white-space:nowrap;
+  }
+
+  .layout{
+    display:flex;
+    align-items:flex-start;
+    max-width:1400px;
+    margin:0 auto;
+  }
+  .sidebar{
+    background:var(--card);
+    border-right:1px solid var(--line);
+    padding:20px 12px;
+    width:220px;
+    flex-shrink:0;
+  }
+  .sidebar-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+    padding:0 12px 10px 12px;
+  }
+  .sidebar a{
+    display:block;
+    text-align:left;
+    padding:11px 12px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    border-radius:6px;
+    border-left:3px solid transparent;
+    margin-bottom:2px;
+  }
+  .sidebar a:hover{ background:var(--bg); color:var(--ink); }
+  .sidebar a.disabled{ color:#B7C0BC; cursor:default; }
+  .sidebar a.disabled:hover{ background:none; color:#B7C0BC; }
+  .sidebar a .badge{
+    float:right;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    background:var(--teal-soft);
+    color:var(--teal);
+    padding:2px 6px;
+    border-radius:10px;
+  }
+  .sidebar a.disabled .badge{ background:var(--bg); color:var(--steel); }
+  .sidebar-cta{
+    margin-top:14px;
+    padding:14px 12px;
+    background:var(--teal-soft);
+    border-radius:8px;
+  }
+  .sidebar-cta p{ font-size:12px; color:var(--ink); margin:0 0 8px 0; line-height:1.4; }
+  .sidebar-cta a{
+    display:inline-block;
+    background:var(--teal);
+    color:#fff;
+    font-size:12px;
+    font-weight:600;
+    padding:8px 12px;
+    border-radius:6px;
+  }
+  .sidebar-cta a:hover{ background:#18564D; }
+
+  main{ flex:1; min-width:0; padding:28px 32px 60px 32px; }
+
+  .hero-banner{
+    background:var(--ink);
+    color:#F6F7F6;
+    border-radius:14px;
+    padding:36px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .hero-banner .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:#8FD8C7;
+    display:block;
+    margin-bottom:10px;
+  }
+  .hero-banner h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:28px;
+    line-height:1.2;
+    margin:0 0 10px 0;
+    max-width:480px;
+  }
+  .hero-banner p{
+    font-size:13.5px;
+    color:#B9C4BF;
+    max-width:440px;
+    margin:0 0 18px 0;
+    line-height:1.5;
+  }
+  .btn-primary{
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    text-decoration:none;
+    display:inline-block;
+  }
+  .btn-primary:hover{ background:#18564D; }
+
+  .hero-readout{
+    background:#1E2E28;
+    border:1px solid #2E4038;
+    border-radius:12px;
+    padding:18px;
+    min-width:260px;
+  }
+  .hero-readout .rlabel{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:#8FA39C;
+    margin-bottom:10px;
+  }
+  .hero-readout .rname{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:12px;
+    color:#F6F7F6;
+  }
+  .rrow{ display:grid; grid-template-columns:16px 1fr 58px; align-items:center; gap:8px; margin-bottom:7px; }
+  .rrow .n{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6B8079; }
+  .rrow.best .n{ color:#3FAF97; font-weight:700; }
+  .rtrack{ height:6px; background:#0F1815; border-radius:3px; overflow:hidden; }
+  .rfill{ height:100%; background:#6B8079; border-radius:3px; }
+  .rrow.best .rfill{ background:#3FAF97; }
+  .rrow .p{ font-family:'IBM Plex Mono', monospace; font-size:11px; text-align:right; color:#DDE6E2; }
+  .rrow.best .p{ color:#3FAF97; font-weight:700; }
+
+  .section{ margin-bottom:40px; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+  .section-head h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; margin:0; }
+  .section-head a{ font-size:12.5px; color:var(--teal); text-decoration:none; font-weight:600; }
+  .deal-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+  .deal-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .deal-card:hover{ border-color:var(--teal); }
+  .deal-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.03em; }
+  .deal-card .dname{ font-family:'Space Grotesk', sans-serif; font-size:13.5px; font-weight:600; line-height:1.3; min-height:34px; }
+  .deal-card .price-line{ display:flex; align-items:baseline; gap:8px; margin-top:2px; }
+  .deal-card .from-price{ font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:700; color:var(--teal); }
+  .deal-card .pct{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--mauve); background:var(--mauve-soft); padding:2px 6px; border-radius:10px; }
+
+  .push-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .push-tile{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:100px;
+    justify-content:center;
+  }
+  .push-tile:hover{ border-color:var(--teal); }
+  .push-tile .icon{
+    width:34px;height:34px;
+    border-radius:8px;
+    background:var(--teal-soft);
+    color:var(--teal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:4px;
+  }
+  .push-tile .name{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14.5px; }
+  .push-tile .count{ font-size:11.5px; color:var(--ink-soft); }
+
+  .disclosure{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; padding-top:8px; border-top:1px solid var(--line); }
+  footer{ background:var(--card); border-top:1px solid var(--line); padding:20px 32px; font-size:12px; color:var(--ink-soft); text-align:center; }
+
+  @media (max-width:900px){
+    .push-grid{ grid-template-columns:repeat(2,1fr); }
+    .search-bar{ display:none; }
+  }
+  @media (max-width:780px){
+    .layout{ flex-direction:column; }
+    .sidebar{
+      width:100%;
+      display:flex;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      border-right:none;
+      border-bottom:1px solid var(--line);
+      padding:12px;
+      gap:4px;
+    }
+    .sidebar-label{ display:none; }
+    .sidebar-cta{ display:none; }
+    .sidebar a{ white-space:nowrap; border-left:none; border-bottom:3px solid transparent; margin-bottom:0; }
+    .hero-banner{ flex-direction:column; align-items:flex-start; }
+    .push-grid{ grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width:480px){
+    header.top, main{ padding-left:16px; padding-right:16px; }
+    .push-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <span class="mark">Dt</span>
+    <div>
+      Dentaire Comparatif
+      <small>Prototype — données d'exemple</small>
+    </div>
+  </a>
+  <div class="search-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Rechercher une référence, une marque…">
+  </div>
+  <div class="top-note">6 catégories · 31 références</div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Catégories</div>
+    <a href="dental-comparator.html?cat=usage-unique">Usage unique <span class="badge">6</span></a>
+    <a href="dental-comparator.html?cat=anesthesie">Anesthésie <span class="badge">5</span></a>
+    <a href="dental-comparator.html?cat=empreintes">Empreintes <span class="badge">5</span></a>
+    <a href="dental-comparator.html?cat=rotatifs">Instruments rotatifs <span class="badge">5</span></a>
+    <a href="dental-comparator.html?cat=endodontie">Endodontie <span class="badge">5</span></a>
+    <a href="dental-comparator.html?cat=hygiene">Hygiène &amp; stérilisation <span class="badge">5</span></a>
+
+    <div class="sidebar-cta">
+      <p>Les 6 catégories sont maintenant comparables.</p>
+    </div>
+  </nav>
+
+  <main>
+
+    <section class="hero-banner">
+      <div>
+        <span class="eyebrow">Pour les chirurgiens-dentistes</span>
+        <h1>Le bon prix, sur le bon consommable, sans ouvrir dix onglets.</h1>
+        <p>On compare pour vous Dental Good Deal, Dentaltix et GACD sur les références que vous commandez chaque mois.</p>
+        <a class="btn-primary" href="dental-comparator.html?cat=usage-unique">Voir le comparatif →</a>
+      </div>
+      <div class="hero-readout">
+        <div class="rlabel">Exemple — Gants nitrile (boîte de 200)</div>
+        <div class="rname">3 marchands comparés</div>
+        <div class="rrow best">
+          <span class="n">1</span>
+          <span class="rtrack"><span class="rfill" style="width:84%;"></span></span>
+          <span class="p">14,20 €</span>
+        </div>
+        <div class="rrow">
+          <span class="n">2</span>
+          <span class="rtrack"><span class="rfill" style="width:92%;"></span></span>
+          <span class="p">15,50 €</span>
+        </div>
+        <div class="rrow">
+          <span class="n">3</span>
+          <span class="rtrack"><span class="rfill" style="width:100%;"></span></span>
+          <span class="p">16,90 €</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Meilleures affaires du moment</h2>
+        <a href="dental-comparator.html?cat=usage-unique">Tout voir →</a>
+      </div>
+      <div class="deal-grid" id="deal-grid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Parcourir par catégorie</h2>
+      </div>
+      <div class="push-grid">
+        <a class="push-tile" href="dental-comparator.html?cat=usage-unique">
+          <span class="icon">01</span>
+          <span class="name">Usage unique</span>
+          <span class="count">Gants, compresses, masques…</span>
+        </a>
+        <a class="push-tile" href="dental-comparator.html?cat=anesthesie">
+          <span class="icon">02</span>
+          <span class="name">Anesthésie</span>
+          <span class="count">Aiguilles, carpules, sprays…</span>
+        </a>
+        <a class="push-tile" href="dental-comparator.html?cat=empreintes">
+          <span class="icon">03</span>
+          <span class="name">Empreintes</span>
+          <span class="count">Alginates, silicones, plâtre…</span>
+        </a>
+        <a class="push-tile" href="dental-comparator.html?cat=rotatifs">
+          <span class="icon">04</span>
+          <span class="name">Instruments rotatifs</span>
+          <span class="count">Fraises, disques, brossettes…</span>
+        </a>
+        <a class="push-tile" href="dental-comparator.html?cat=endodontie">
+          <span class="icon">05</span>
+          <span class="name">Endodontie</span>
+          <span class="count">Limes, gutta percha, digues…</span>
+        </a>
+        <a class="push-tile" href="dental-comparator.html?cat=hygiene">
+          <span class="icon">06</span>
+          <span class="name">Hygiène &amp; stérilisation</span>
+          <span class="count">Sachets, désinfectants…</span>
+        </a>
+      </div>
+    </section>
+
+    <p class="disclosure">
+      <strong>Information :</strong> ce site contient des liens affiliés. Lorsque vous cliquez sur « Voir l'offre » et effectuez un achat chez l'un de nos partenaires marchands, nous pouvons percevoir une commission, sans surcoût pour vous.
+    </p>
+
+  </main>
+</div>
+
+<footer>
+  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
+</footer>
+
+<script>
+const deals = [
+  { name: "Gants nitrile non poudrés — Boîte 200", tag: "Usage unique", price: 14.20, pct: 16, cat: "usage-unique" },
+  { name: "Compresses stériles — Sachet 100", tag: "Usage unique", price: 6.35, pct: 9, cat: "usage-unique" },
+  { name: "Spray de refroidissement 200 ml", tag: "Anesthésie", price: 8.20, pct: 13, cat: "anesthesie" },
+  { name: "Alginate fraguado rapide 450 g", tag: "Empreintes", price: 4.60, pct: 13, cat: "empreintes" },
+  { name: "Gel anesthésique de surface 30 g", tag: "Anesthésie", price: 10.60, pct: 11, cat: "anesthesie" },
+  { name: "Porte-empreintes perforés (set)", tag: "Empreintes", price: 5.20, pct: 12, cat: "empreintes" }
+];
+
+document.getElementById('deal-grid').innerHTML = deals.map(d => `
+  <a class="deal-card" href="dental-comparator.html?cat=${d.cat}">
+    <span class="tag">${d.tag}</span>
+    <span class="dname">${d.name}</span>
+    <div class="price-line">
+      <span class="from-price">${d.price.toFixed(2)} €</span>
+      <span class="pct">-${d.pct}%</span>
+    </div>
+  </a>
+`).join('');
+</script>
+
+</body>
+</html>

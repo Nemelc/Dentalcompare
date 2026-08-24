@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche produit — Dentaire Comparatif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F7F6; --card: #FFFFFF; --ink: #16241F; --ink-soft: #57655F;
+    --line: #DEE4E1; --teal: #1F6F63; --teal-soft: #E4EFEC;
+    --mauve: #B96C86; --mauve-soft: #F6E9ED; --steel: #7C8B92; --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  header.top{
+    background:var(--ink); color:#F6F7F6; padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  }
+  .brand{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em;
+    display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+  .brand .mark{ width:26px;height:26px; border:2px solid #F6F7F6; border-radius:6px;
+    display:flex;align-items:center;justify-content:center; font-size:12px; font-family:'IBM Plex Mono', monospace; }
+  .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9C4BF; }
+  .top-note{ font-size:11.5px; color:#B9C4BF; font-family:'IBM Plex Mono', monospace; }
+
+  .layout{ display:flex; align-items:flex-start; max-width:1400px; margin:0 auto; }
+  .sidebar{ background:var(--card); border-right:1px solid var(--line); padding:20px 12px; width:220px; flex-shrink:0; }
+  .sidebar-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:0 12px 10px 12px; }
+  .sidebar a{ display:block; padding:11px 12px; font-family:'IBM Plex Sans', sans-serif; font-size:14px; color:var(--ink-soft); text-decoration:none; border-radius:6px; border-left:3px solid transparent; margin-bottom:2px; }
+  .sidebar a:hover{ background:var(--bg); color:var(--ink); }
+  .sidebar a.active{ color:var(--teal); background:var(--teal-soft); border-left:3px solid var(--teal); font-weight:600; }
+
+  main{ flex:1; min-width:0; padding:32px; max-width:820px; }
+  .breadcrumb{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; }
+  .breadcrumb a{ color:var(--teal); text-decoration:none; }
+  .breadcrumb a:hover{ text-decoration:underline; }
+
+  .tag{ display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase;
+    background:var(--teal-soft); color:var(--teal); padding:3px 8px; border-radius:4px; margin-bottom:10px; }
+  h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px 0; letter-spacing:-0.01em; line-height:1.25; }
+  .subline{ font-size:14px; color:var(--ink-soft); margin-bottom:24px; }
+
+  .desc-block{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:24px;
+  }
+  .desc-block .label{ font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:10px; }
+  .desc-block p{ font-size:14.5px; line-height:1.65; color:var(--ink); margin:0 0 10px 0; }
+  .desc-block p:last-child{ margin-bottom:0; }
+  .desc-sources{ font-size:11.5px; color:var(--steel); margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+
+  .compare-block{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:24px; }
+  .compare-block .label{ font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:14px; }
+  .rank-row{ display:grid; grid-template-columns:24px 150px 1fr 90px; align-items:center; gap:12px; margin-bottom:12px; }
+  .rank-row .num{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--steel); }
+  .rank-row.best .num{ color:var(--teal); font-weight:700; }
+  .rank-row .merch{ font-size:14px; color:var(--ink-soft); }
+  .rank-row.best .merch{ color:var(--ink); font-weight:600; }
+  .rank-bar-track{ height:10px; background:var(--bg); border-radius:5px; overflow:hidden; }
+  .rank-bar-fill{ height:100%; background:var(--steel); border-radius:5px; }
+  .rank-row.best .rank-bar-fill{ background:var(--teal); }
+  .rank-row .price{ font-family:'IBM Plex Mono', monospace; font-size:15px; text-align:right; color:var(--ink); }
+  .rank-row.best .price{ color:var(--teal); font-weight:700; }
+
+  .cta-row{ display:flex; gap:10px; align-items:center; border-top:1px solid var(--line); padding-top:18px; margin-top:6px; }
+  .cta-btn{ flex:1; background:var(--teal); color:#fff; border:none; padding:14px; border-radius:8px;
+    font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:15px; cursor:pointer; }
+  .cta-btn:hover{ background:#18564D; }
+  .cta-note{ font-size:11.5px; color:var(--ink-soft); max-width:130px; line-height:1.35; }
+
+  .not-found{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
+  .not-found a{ color:var(--teal); font-weight:600; }
+
+  .disclosure{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; }
+  footer{ background:var(--card); border-top:1px solid var(--line); padding:20px 32px; font-size:12px; color:var(--ink-soft); text-align:center; }
+
+  @media (max-width:780px){
+    .layout{ flex-direction:column; }
+    .sidebar{ width:100%; display:flex; overflow-x:auto; border-right:none; border-bottom:1px solid var(--line); padding:12px; gap:4px; }
+    .sidebar-label{ display:none; }
+    .sidebar a{ white-space:nowrap; border-left:none; border-bottom:3px solid transparent; margin-bottom:0; }
+    .rank-row{ grid-template-columns:20px 100px 1fr 70px; gap:8px; }
+  }
+  @media (max-width:480px){
+    header.top, main{ padding-left:16px; padding-right:16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <span class="mark">Dt</span>
+    <div>Dentaire Comparatif<small>Prototype — données d'exemple</small></div>
+  </a>
+  <div class="top-note">Fiche produit</div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">Catégories</div>
+    <a href="dental-comparator.html?cat=usage-unique" data-cat="usage-unique">Usage unique</a>
+    <a href="dental-comparator.html?cat=anesthesie" data-cat="anesthesie">Anesthésie</a>
+    <a href="dental-comparator.html?cat=empreintes" data-cat="empreintes">Empreintes</a>
+    <a href="dental-comparator.html?cat=rotatifs" data-cat="rotatifs">Instruments rotatifs</a>
+    <a href="dental-comparator.html?cat=endodontie" data-cat="endodontie">Endodontie</a>
+    <a href="dental-comparator.html?cat=hygiene" data-cat="hygiene">Hygiène &amp; stérilisation</a>
+  </nav>
+
+  <main id="main-content">
+    <!-- Rempli automatiquement par JavaScript selon le produit demandé -->
+  </main>
+</div>
+
+<footer>
+  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
+</footer>
+
+<script>
+const CATEGORIES = {
+  "usage-unique": {
+    title: "Usage unique",
+    sub: "Gants, compresses, aiguilles — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Gants nitrile non poudrés — Boîte de 200",
+        sub: "Coloris bleu · Taille M",
+        tag: "Gants",
+        prices: [
+          { merchant: "Dental Good Deal", value: 15.50 },
+          { merchant: "Dentaltix", value: 14.20 },
+          { merchant: "GACD", value: 16.90 }
+        ]
+      },
+      {
+        name: "Compresses non tissées stériles — Sachet de 100",
+        sub: "7,5 x 7,5 cm",
+        tag: "Compresses",
+        prices: [
+          { merchant: "Dental Good Deal", value: 7.00 },
+          { merchant: "Dentaltix", value: 6.35 },
+          { merchant: "GACD", value: 6.80 }
+        ]
+      },
+      {
+        name: "Rouleaux salivaires — Sachet de 2000",
+        sub: "N°2, Ø 10 mm",
+        tag: "Usage unique",
+        prices: [
+          { merchant: "Dental Good Deal", value: 10.20 },
+          { merchant: "Dentaltix", value: 9.75 },
+          { merchant: "GACD", value: 10.90 }
+        ]
+      },
+      {
+        name: "Masques chirurgicaux 3 plis — Boîte de 50",
+        sub: "Type IIR",
+        tag: "Masques",
+        prices: [
+          { merchant: "Dental Good Deal", value: 4.60 },
+          { merchant: "Dentaltix", value: 4.10 },
+          { merchant: "GACD", value: 4.35 }
+        ]
+      },
+      {
+        name: "Plateaux jetables striés — Sachet de 250",
+        sub: "Avec compartiments",
+        tag: "Plateaux",
+        prices: [
+          { merchant: "Dental Good Deal", value: 23.70 },
+          { merchant: "Dentaltix", value: 25.40 },
+          { merchant: "GACD", value: 22.90 }
+        ]
+      },
+      {
+        name: "Bavoirs de protection — Sachet de 500",
+        sub: "3 plis, plastifiés",
+        tag: "Protection",
+        prices: [
+          { merchant: "Dental Good Deal", value: 13.90 },
+          { merchant: "Dentaltix", value: 12.90 },
+          { merchant: "GACD", value: 14.50 }
+        ]
+      }
+    ]
+  },
+  "anesthesie": {
+    title: "Anesthésie",
+    sub: "Aiguilles, carpules, sprays — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Aiguilles d'anesthésie — Boîte de 100",
+        sub: "30G courte",
+        tag: "Aiguilles",
+        prices: [
+          { merchant: "Dental Good Deal", value: 12.50 },
+          { merchant: "Dentaltix", value: 13.10 },
+          { merchant: "GACD", value: 11.95 }
+        ]
+      },
+      {
+        name: "Carpules anesthésiques — Boîte de 50",
+        sub: "Articaïne 4% + adrénaline 1/100 000",
+        tag: "Carpules",
+        prices: [
+          { merchant: "Dental Good Deal", value: 34.90 },
+          { merchant: "Dentaltix", value: 32.50 },
+          { merchant: "GACD", value: 33.80 }
+        ]
+      },
+      {
+        name: "Spray de refroidissement — Flacon 200 ml",
+        sub: "Test de vitalité pulpaire",
+        tag: "Diagnostic",
+        prices: [
+          { merchant: "Dental Good Deal", value: 8.90 },
+          { merchant: "Dentaltix", value: 9.40 },
+          { merchant: "GACD", value: 8.20 }
+        ]
+      },
+      {
+        name: "Seringues d'anesthésie à cartouche",
+        sub: "Type carpule, autoclavable",
+        tag: "Seringues",
+        prices: [
+          { merchant: "Dental Good Deal", value: 42.00 },
+          { merchant: "Dentaltix", value: 39.90 },
+          { merchant: "GACD", value: 44.50 }
+        ]
+      },
+      {
+        name: "Gel anesthésique de surface — Tube 30 g",
+        sub: "Benzocaïne, goût menthe",
+        tag: "Topique",
+        prices: [
+          { merchant: "Dental Good Deal", value: 11.20 },
+          { merchant: "Dentaltix", value: 10.60 },
+          { merchant: "GACD", value: 11.90 }
+        ]
+      }
+    ]
+  },
+  "empreintes": {
+    title: "Empreintes",
+    sub: "Alginates, silicones, porte-empreintes — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Alginate de fraguado rapide — Sachet 450 g",
+        sub: "Sans latex, chromatique",
+        tag: "Alginates",
+        prices: [
+          { merchant: "Dental Good Deal", value: 5.00 },
+          { merchant: "Dentaltix", value: 4.60 },
+          { merchant: "GACD", value: 5.30 }
+        ]
+      },
+      {
+        name: "Silicone par addition Putty Soft — 2 pots de 300 ml",
+        sub: "Type Putty, prise normale",
+        tag: "Silicones",
+        prices: [
+          { merchant: "Dental Good Deal", value: 26.90 },
+          { merchant: "Dentaltix", value: 24.90 },
+          { merchant: "GACD", value: 27.50 }
+        ]
+      },
+      {
+        name: "Porte-empreintes perforés — Set assorti aluminium",
+        sub: "13 tailles, réutilisables",
+        tag: "Porte-empreintes",
+        prices: [
+          { merchant: "Dental Good Deal", value: 5.50 },
+          { merchant: "Dentaltix", value: 5.90 },
+          { merchant: "GACD", value: 5.20 }
+        ]
+      },
+      {
+        name: "Plâtre dentaire type IV — Sac 5 kg",
+        sub: "Haute résistance, faible expansion",
+        tag: "Plâtre",
+        prices: [
+          { merchant: "Dental Good Deal", value: 42.65 },
+          { merchant: "Dentaltix", value: 39.90 },
+          { merchant: "GACD", value: 41.20 }
+        ]
+      },
+      {
+        name: "Embouts mélangeurs automatiques — Boîte de 50",
+        sub: "Compatible silicones et polyéthers",
+        tag: "Accessoires",
+        prices: [
+          { merchant: "Dental Good Deal", value: 12.30 },
+          { merchant: "Dentaltix", value: 11.50 },
+          { merchant: "GACD", value: 12.90 }
+        ]
+      }
+    ]
+  },
+  "rotatifs": {
+    title: "Instruments rotatifs",
+    sub: "Fraises, disques, brossettes — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Assortiment fraises diamantées turbine — Coffret 30 pièces",
+        sub: "Grain standard, formes variées",
+        tag: "Fraises diamantées",
+        prices: [
+          { merchant: "Dental Good Deal", value: 38.90 },
+          { merchant: "Dentaltix", value: 41.50 },
+          { merchant: "GACD", value: 37.20 }
+        ]
+      },
+      {
+        name: "Fraises carbure de tungstène boule — Boîte de 10",
+        sub: "Pour turbine, taille 1-6",
+        tag: "Fraises carbure",
+        prices: [
+          { merchant: "Dental Good Deal", value: 14.60 },
+          { merchant: "Dentaltix", value: 13.90 },
+          { merchant: "GACD", value: 15.10 }
+        ]
+      },
+      {
+        name: "Disques à polir composite — Kit assorti",
+        sub: "4 granulométries, système Soflex",
+        tag: "Polissage",
+        prices: [
+          { merchant: "Dental Good Deal", value: 22.40 },
+          { merchant: "Dentaltix", value: 20.90 },
+          { merchant: "GACD", value: 23.10 }
+        ]
+      },
+      {
+        name: "Brossettes à prophylaxie — Boîte de 100",
+        sub: "Contre-angle, poils doux",
+        tag: "Prophylaxie",
+        prices: [
+          { merchant: "Dental Good Deal", value: 16.80 },
+          { merchant: "Dentaltix", value: 17.40 },
+          { merchant: "GACD", value: 15.90 }
+        ]
+      },
+      {
+        name: "Fraises diamantées bague noire (chirurgie) — Boîte de 5",
+        sub: "Grain gros, pour turbine",
+        tag: "Fraises diamantées",
+        prices: [
+          { merchant: "Dental Good Deal", value: 19.50 },
+          { merchant: "Dentaltix", value: 18.20 },
+          { merchant: "GACD", value: 20.10 }
+        ]
+      }
+    ]
+  },
+  "endodontie": {
+    title: "Endodontie",
+    sub: "Limes, gutta percha, digues — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Limes K-file manuelles — Boîte de 6",
+        sub: "Assorties, 21 mm",
+        tag: "Limes manuelles",
+        prices: [
+          { merchant: "Dental Good Deal", value: 6.90 },
+          { merchant: "Dentaltix", value: 6.40 },
+          { merchant: "GACD", value: 7.20 }
+        ]
+      },
+      {
+        name: "Limes rotatives Ni-Ti — Boîte de 6",
+        sub: "Séquence unique, 25 mm",
+        tag: "Limes rotatives",
+        prices: [
+          { merchant: "Dental Good Deal", value: 54.90 },
+          { merchant: "Dentaltix", value: 51.20 },
+          { merchant: "GACD", value: 56.40 }
+        ]
+      },
+      {
+        name: "Pointes de gutta percha — Boîte de 120",
+        sub: "Assorties 15-40",
+        tag: "Obturation",
+        prices: [
+          { merchant: "Dental Good Deal", value: 8.30 },
+          { merchant: "Dentaltix", value: 7.90 },
+          { merchant: "GACD", value: 8.60 }
+        ]
+      },
+      {
+        name: "Ciment d'obturation canalaire — Kit",
+        sub: "Base résine, prise chimique",
+        tag: "Ciments",
+        prices: [
+          { merchant: "Dental Good Deal", value: 45.20 },
+          { merchant: "Dentaltix", value: 42.90 },
+          { merchant: "GACD", value: 46.80 }
+        ]
+      },
+      {
+        name: "Digues dentaires latex — Boîte de 52",
+        sub: "Épaisseur medium, non parfumées",
+        tag: "Champ opératoire",
+        prices: [
+          { merchant: "Dental Good Deal", value: 9.40 },
+          { merchant: "Dentaltix", value: 8.80 },
+          { merchant: "GACD", value: 9.90 }
+        ]
+      }
+    ]
+  },
+  "hygiene": {
+    title: "Hygiène & stérilisation",
+    sub: "Sachets, désinfectants, indicateurs — comparés sur Dental Good Deal, Dentaltix et GACD",
+    products: [
+      {
+        name: "Sachets de stérilisation auto-scellants — Boîte de 200",
+        sub: "90 x 260 mm",
+        tag: "Stérilisation",
+        prices: [
+          { merchant: "Dental Good Deal", value: 17.20 },
+          { merchant: "Dentaltix", value: 15.90 },
+          { merchant: "GACD", value: 18.10 }
+        ]
+      },
+      {
+        name: "Solution désinfectante surfaces — Bidon 5 L",
+        sub: "Large spectre, sans aldéhyde",
+        tag: "Désinfection",
+        prices: [
+          { merchant: "Dental Good Deal", value: 28.50 },
+          { merchant: "Dentaltix", value: 26.90 },
+          { merchant: "GACD", value: 29.90 }
+        ]
+      },
+      {
+        name: "Indicateurs de stérilisation — Boîte de 250",
+        sub: "Classe 4, virage colorimétrique",
+        tag: "Contrôle",
+        prices: [
+          { merchant: "Dental Good Deal", value: 21.80 },
+          { merchant: "Dentaltix", value: 20.40 },
+          { merchant: "GACD", value: 22.60 }
+        ]
+      },
+      {
+        name: "Housses de protection tubing — Rouleau de 500",
+        sub: "Barrière fauteuil et unit",
+        tag: "Protection unit",
+        prices: [
+          { merchant: "Dental Good Deal", value: 11.90 },
+          { merchant: "Dentaltix", value: 12.60 },
+          { merchant: "GACD", value: 11.30 }
+        ]
+      },
+      {
+        name: "Spray désinfectant instruments — Flacon 1 L",
+        sub: "Action rapide, pré-désinfection",
+        tag: "Désinfection",
+        prices: [
+          { merchant: "Dental Good Deal", value: 14.70 },
+          { merchant: "Dentaltix", value: 13.90 },
+          { merchant: "GACD", value: 15.20 }
+        ]
+      }
+    ]
+  }
+};
+
+function slugify(str){
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// Génère une description "synthèse" automatiquement à partir des infos déjà connues du produit.
+// Quand on aura les vraies descriptions des 3 sites, on pourra les remplacer ici sans toucher au reste de la page.
+function synthesizeDescription(p, catTitle){
+  const merchantNames = p.prices.map(x => x.merchant).join(', ');
+  return [
+    `${p.name} — ${p.sub}. Référence de la catégorie « ${catTitle} », suivie chez ${p.prices.length} fournisseurs professionnels : ${merchantNames}.`,
+    `Cette synthèse rassemble les informations disponibles chez chaque marchand pour cette référence : conditionnement, usage prévu et prix pratiqués. Elle vous évite d'ouvrir chaque site un par un pour vérifier qu'il s'agit bien du même produit.`,
+    `À l'usage, cette référence correspond à un consommable couramment commandé en cabinet dentaire dans la catégorie ${catTitle.toLowerCase()}. Vérifiez toujours la fiche technique complète sur le site du marchand avant commande (lot, date de péremption, certification CE).`
+  ];
+}
+
+function findProductById(id){
+  for(const catKey in CATEGORIES){
+    const cat = CATEGORIES[catKey];
+    const found = cat.products.find(p => slugify(p.name) === id);
+    if(found) return { product: found, catKey, catTitle: cat.title };
+  }
+  return null;
+}
+
+function renderProduct(){
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const result = id ? findProductById(id) : null;
+  const main = document.getElementById('main-content');
+
+  if(!result){
+    main.innerHTML = `
+      <div class="not-found">
+        <p>Produit introuvable.</p>
+        <a href="index.html">← Retour à l'accueil</a>
+      </div>
+    `;
+    return;
+  }
+
+  const { product: p, catKey, catTitle } = result;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.cat === catKey));
+  document.title = p.name + " — Dentaire Comparatif";
+
+  const sorted = [...p.prices].sort((a,b)=>a.value-b.value);
+  const min = sorted[0].value;
+  const max = sorted[sorted.length-1].value;
+
+  const rows = sorted.map((pr, i) => {
+    const isBest = i === 0;
+    const barPct = (pr.value / max) * 100;
+    return `
+      <div class="rank-row ${isBest ? 'best' : ''}">
+        <span class="num">${i+1}</span>
+        <span class="merch">${pr.merchant}</span>
+        <span class="rank-bar-track"><span class="rank-bar-fill" style="width:${barPct}%;"></span></span>
+        <span class="price">${pr.value.toFixed(2)} €</span>
+      </div>
+    `;
+  }).join('');
+
+  const descParagraphs = synthesizeDescription(p, catTitle).map(t => `<p>${t}</p>`).join('');
+
+  main.innerHTML = `
+    <div class="breadcrumb">
+      <a href="index.html">Accueil</a> → <a href="dental-comparator.html?cat=${catKey}">${catTitle}</a> → ${p.name}
+    </div>
+
+    <span class="tag">${p.tag}</span>
+    <h1>${p.name}</h1>
+    <div class="subline">${p.sub}</div>
+
+    <div class="desc-block">
+      <div class="label">Description synthétisée — ${p.prices.length} sources</div>
+      ${descParagraphs}
+      <div class="desc-sources">Générée automatiquement à partir des fiches de ${p.prices.map(x=>x.merchant).join(', ')}.</div>
+    </div>
+
+    <div class="compare-block">
+      <div class="label">Comparatif des ${p.prices.length} marchands</div>
+      ${rows}
+      <div class="cta-row">
+        <button class="cta-btn" onclick="reveal(this)">Voir la meilleure offre — ${min.toFixed(2)} € &nbsp;→</button>
+        <div class="cta-note">Redirige vers le marchand le moins cher</div>
+      </div>
+    </div>
+
+    <p class="disclosure">
+      <strong>Information :</strong> ce site contient des liens affiliés. Lorsque vous cliquez sur « Voir l'offre » et effectuez un achat, nous pouvons percevoir une commission, sans surcoût pour vous.
+    </p>
+  `;
+}
+
+function reveal(btn){
+  btn.textContent = "Redirection vers le marchand…";
+  btn.style.background = "#57655F";
+}
+
+renderProduct();
+</script>
+
+</body>
+</html>
