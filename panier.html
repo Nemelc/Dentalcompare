@@ -96,9 +96,33 @@
 
   .multi-group{ margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
   .multi-group:last-of-type{ border-bottom:none; }
-  .multi-group .gmerchant{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13.5px; margin-bottom:6px; }
-  .multi-group .gitem{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); padding:3px 0; }
-  .multi-group .gsubtotal{ text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; color:var(--ink); margin-top:4px; }
+  .multi-group .gmerchant{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13.5px; margin-bottom:8px; }
+  .multi-group .gitem{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12.5px; color:var(--ink-soft); padding:6px 0; gap:10px;
+  }
+  .multi-group .gitem-name{ flex:1; min-width:0; }
+  .multi-group .gitem-right{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .multi-group .gitem-price{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink); white-space:nowrap; }
+  .mini-cta-btn{
+    background:var(--teal); color:#fff; border:none; padding:6px 12px;
+    border-radius:6px; font-family:'IBM Plex Sans', sans-serif; font-size:11.5px;
+    font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .mini-cta-btn:hover{ background:#18564D; }
+  .multi-group .gsubtotal{ text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; color:var(--ink); margin-top:6px; }
+
+  .cart-cta-row{
+    display:flex; align-items:center; gap:12px;
+    margin-top:18px; padding-top:16px; border-top:1px solid var(--line);
+  }
+  .cart-cta-btn{
+    flex:1; background:var(--teal); color:#fff; border:none; padding:13px 16px;
+    border-radius:8px; font-family:'IBM Plex Sans', sans-serif; font-weight:600;
+    font-size:14px; cursor:pointer;
+  }
+  .cart-cta-btn:hover{ background:#18564D; }
+  .cart-cta-note{ font-size:11px; color:var(--ink-soft); max-width:140px; line-height:1.35; }
 
   .grand-total{
     display:flex; justify-content:space-between; align-items:center;
@@ -291,6 +315,10 @@ function renderSingleMerchantMode(cart){
       <span class="label">Total chez ${best.merchant}</span>
       <span class="value">${best.total.toFixed(2)} €</span>
     </div>
+    <div class="cart-cta-row">
+      <button class="cart-cta-btn" onclick="revealCta(this)">Voir l'offre chez ${best.merchant} &nbsp;→</button>
+      <div class="cart-cta-note">Redirige vers ${best.merchant} avec les ${cart.length} article(s) de votre panier</div>
+    </div>
   `;
 }
 
@@ -312,7 +340,13 @@ function renderMultiMerchantMode(cart){
   const groupsHtml = Object.entries(groups).map(([merchant, items]) => {
     const subtotal = items.reduce((s,i)=>s+i.lineTotal, 0);
     const itemsHtml = items.map(i => `
-      <div class="gitem"><span>${i.name} ${i.qty > 1 ? '× '+i.qty : ''}</span><span>${i.lineTotal.toFixed(2)} €</span></div>
+      <div class="gitem">
+        <span class="gitem-name">${i.name} ${i.qty > 1 ? '× '+i.qty : ''}</span>
+        <span class="gitem-right">
+          <span class="gitem-price">${i.lineTotal.toFixed(2)} €</span>
+          <button class="mini-cta-btn" onclick="revealCta(this)">Voir l'offre →</button>
+        </span>
+      </div>
     `).join('');
     return `
       <div class="multi-group">
@@ -333,6 +367,12 @@ function renderMultiMerchantMode(cart){
       <span class="value">${grandTotal.toFixed(2)} €</span>
     </div>
   `;
+}
+
+function revealCta(btn){
+  btn.textContent = "Redirection…";
+  btn.disabled = true;
+  btn.style.opacity = "0.7";
 }
 
 render();
