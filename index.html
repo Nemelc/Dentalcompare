@@ -93,6 +93,33 @@
     font-family:'IBM Plex Mono', monospace;
     white-space:nowrap;
   }
+  .cart-link{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#F6F7F6;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    background:#233830;
+    padding:8px 14px;
+    border-radius:20px;
+  }
+  .cart-link:hover{ background:#2E453C; }
+  .cart-badge{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    min-width:18px;
+    height:18px;
+    padding:0 4px;
+    background:var(--teal);
+    color:#fff;
+    font-size:10.5px;
+    font-weight:700;
+    border-radius:10px;
+  }
 
   .layout{
     display:flex;
@@ -338,6 +365,10 @@
     <input type="text" placeholder="Rechercher une référence, une marque…">
   </div>
   <div class="top-note">6 catégories · 31 références · 17 marchands</div>
+  <a href="panier.html" class="cart-link">
+    🛒 Panier
+    <span id="cart-badge" class="cart-badge">0</span>
+  </a>
 </header>
 
 <div class="layout">
@@ -444,6 +475,7 @@
   &nbsp;·&nbsp; <a href="cgu.html" style="color:inherit;">CGU</a>
 </footer>
 
+<script src="cart.js"></script>
 <script>
 const deals = [
   { name: "Gants nitrile non poudrés — Boîte 200", tag: "Usage unique", price: 14.20, pct: 16, cat: "usage-unique" },

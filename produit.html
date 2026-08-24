@@ -25,6 +25,33 @@
     display:flex;align-items:center;justify-content:center; font-size:12px; font-family:'IBM Plex Mono', monospace; }
   .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9C4BF; }
   .top-note{ font-size:11.5px; color:#B9C4BF; font-family:'IBM Plex Mono', monospace; }
+  .cart-link{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#F6F7F6;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    background:#233830;
+    padding:8px 14px;
+    border-radius:20px;
+  }
+  .cart-link:hover{ background:#2E453C; }
+  .cart-badge{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    min-width:18px;
+    height:18px;
+    padding:0 4px;
+    background:var(--teal);
+    color:#fff;
+    font-size:10.5px;
+    font-weight:700;
+    border-radius:10px;
+  }
 
   .layout{ display:flex; align-items:flex-start; max-width:1400px; margin:0 auto; }
   .sidebar{ background:var(--card); border-right:1px solid var(--line); padding:20px 12px; width:220px; flex-shrink:0; }
@@ -104,6 +131,21 @@
     font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:15px; cursor:pointer; }
   .cta-btn:hover{ background:#18564D; }
   .cta-note{ font-size:11.5px; color:var(--ink-soft); max-width:130px; line-height:1.35; }
+  .add-cart-btn{
+    width:100%;
+    margin-top:10px;
+    background:none;
+    border:1px solid var(--teal);
+    color:var(--teal);
+    padding:11px 14px;
+    border-radius:8px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .add-cart-btn:hover{ background:var(--teal-soft); }
+  .add-cart-btn.added{ background:var(--teal); color:#fff; border-color:var(--teal); }
 
   .not-found{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
   .not-found a{ color:var(--teal); font-weight:600; }
@@ -131,6 +173,10 @@
     <div>DentaCompare<small>Prototype — données d'exemple</small></div>
   </a>
   <div class="top-note">Fiche produit</div>
+  <a href="panier.html" class="cart-link">
+    🛒 Panier
+    <span id="cart-badge" class="cart-badge">0</span>
+  </a>
 </header>
 
 <div class="layout">
@@ -155,6 +201,7 @@
   &nbsp;·&nbsp; <a href="cgu.html" style="color:inherit;">CGU</a>
 </footer>
 
+<script src="cart.js"></script>
 <script>
 const CATEGORIES = {
   "usage-unique": {
@@ -790,6 +837,9 @@ function renderProduct(){
         <button class="cta-btn" onclick="reveal(this)">Voir la meilleure offre — ${min.toFixed(2)} € &nbsp;→</button>
         <div class="cta-note">Redirige vers le marchand le moins cher</div>
       </div>
+      <button class="add-cart-btn" onclick='addProductToCart(this)' data-product='${JSON.stringify({id: id, name: p.name, tag: p.tag, sub: p.sub, prices: p.prices}).replace(/'/g, "&#39;")}'>
+        + Ajouter au panier
+      </button>
     </div>
 
     <p class="disclosure">
@@ -801,6 +851,18 @@ function renderProduct(){
 function reveal(btn){
   btn.textContent = "Redirection vers le marchand…";
   btn.style.background = "#57655F";
+}
+
+function addProductToCart(btn){
+  const product = JSON.parse(btn.dataset.product);
+  addToCart(product);
+  const original = btn.textContent;
+  btn.textContent = "✓ Ajouté au panier";
+  btn.classList.add('added');
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.classList.remove('added');
+  }, 1400);
 }
 
 renderProduct();

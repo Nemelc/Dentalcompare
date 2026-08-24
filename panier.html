@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon panier — DentaCompare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F7F6; --card: #FFFFFF; --ink: #16241F; --ink-soft: #57655F;
+    --line: #DEE4E1; --teal: #1F6F63; --teal-soft: #E4EFEC;
+    --mauve: #B96C86; --mauve-soft: #F6E9ED; --steel: #7C8B92; --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  header.top{
+    background:var(--ink); color:#F6F7F6; padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  }
+  .brand{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em;
+    display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+  .brand .mark{ width:26px;height:26px; border:2px solid #F6F7F6; border-radius:6px;
+    display:flex;align-items:center;justify-content:center; font-size:12px; font-family:'IBM Plex Mono', monospace; }
+  .brand small{ display:block; font-weight:400; font-size:10.5px; color:#B9C4BF; }
+
+  main{ max-width:900px; margin:0 auto; padding:32px; }
+  h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px 0; }
+  .subhead{ font-size:13.5px; color:var(--ink-soft); margin-bottom:24px; }
+
+  .empty-cart{
+    text-align:center; padding:70px 20px; background:var(--card);
+    border:1px dashed var(--line); border-radius:var(--radius); color:var(--ink-soft);
+  }
+  .empty-cart a{ color:var(--teal); font-weight:600; text-decoration:none; }
+
+  .item-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
+  .cart-item{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; display:flex; align-items:center; gap:14px;
+  }
+  .cart-item .icon{ font-size:22px; flex-shrink:0; }
+  .cart-item .info{ flex:1; min-width:0; }
+  .cart-item .name{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px; margin:0; }
+  .cart-item .meta{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .cart-item .qty{
+    display:flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-size:13px;
+  }
+  .qty-btn{
+    width:24px; height:24px; border-radius:6px; border:1px solid var(--line);
+    background:var(--bg); cursor:pointer; font-size:14px; color:var(--ink);
+  }
+  .remove-btn{
+    background:none; border:none; color:var(--mauve); font-size:12px; cursor:pointer;
+    font-weight:600; white-space:nowrap;
+  }
+  .clear-link{
+    display:inline-block; font-size:12.5px; color:var(--ink-soft); text-decoration:underline;
+    cursor:pointer; margin-bottom:24px;
+  }
+
+  .mode-tabs{ display:flex; gap:8px; margin-bottom:18px; }
+  .mode-tab{
+    flex:1; text-align:center; padding:12px 14px; border-radius:8px;
+    border:1px solid var(--line); background:var(--card); cursor:pointer;
+    font-size:13px; font-weight:600; color:var(--ink-soft);
+  }
+  .mode-tab.active{ border-color:var(--teal); background:var(--teal-soft); color:var(--teal); }
+  .mode-tab .desc{ display:block; font-weight:400; font-size:11px; margin-top:3px; color:var(--ink-soft); }
+
+  .mode-panel{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px;
+  }
+  .mode-panel h2{ font-family:'Space Grotesk', sans-serif; font-size:16px; margin:0 0 4px 0; }
+  .mode-panel .hint{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; line-height:1.5; }
+
+  .merchant-total-row{
+    display:grid; grid-template-columns:24px 1fr 90px; align-items:center; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--line);
+  }
+  .merchant-total-row:last-child{ border-bottom:none; }
+  .merchant-total-row .rank{ font-family:'IBM Plex Mono', monospace; color:var(--steel); font-size:12px; }
+  .merchant-total-row.best .rank{ color:var(--teal); font-weight:700; }
+  .merchant-total-row .mname{ font-size:13.5px; font-weight:600; }
+  .merchant-total-row .mcoverage{ font-size:11px; color:var(--ink-soft); font-weight:400; }
+  .merchant-total-row .mtotal{ text-align:right; font-family:'IBM Plex Mono', monospace; font-size:14px; }
+  .merchant-total-row.best .mtotal{ color:var(--teal); font-weight:700; }
+
+  .best-banner{
+    background:var(--teal-soft); border-radius:8px; padding:14px 16px; margin-bottom:16px;
+    font-size:13px; color:var(--ink);
+  }
+  .best-banner strong{ color:var(--teal); }
+
+  .multi-group{ margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .multi-group:last-of-type{ border-bottom:none; }
+  .multi-group .gmerchant{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13.5px; margin-bottom:6px; }
+  .multi-group .gitem{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); padding:3px 0; }
+  .multi-group .gsubtotal{ text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; color:var(--ink); margin-top:4px; }
+
+  .grand-total{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:18px; padding-top:16px; border-top:2px solid var(--line);
+  }
+  .grand-total .label{ font-size:13px; color:var(--ink-soft); }
+  .grand-total .value{ font-family:'Space Grotesk', sans-serif; font-size:24px; font-weight:700; color:var(--teal); }
+
+  .comparison-note{
+    margin-top:16px; padding:12px 14px; background:var(--mauve-soft); border-radius:8px;
+    font-size:12.5px; color:var(--ink);
+  }
+  .comparison-note strong{ color:var(--mauve); }
+
+  .no-single{ text-align:center; padding:30px 20px; color:var(--ink-soft); font-size:13.5px; }
+
+  footer{ background:var(--card); border-top:1px solid var(--line); padding:20px 32px; font-size:12px; color:var(--ink-soft); text-align:center; margin-top:40px; }
+
+  @media (max-width:600px){
+    header.top, main{ padding-left:16px; padding-right:16px; }
+    .cart-item{ flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <span class="mark">Dt</span>
+    <div>DentaCompare<small>Prototype — données d'exemple</small></div>
+  </a>
+</header>
+
+<main>
+  <h1>Mon panier</h1>
+  <div class="subhead" id="subhead"></div>
+  <div id="cart-content"></div>
+</main>
+
+<footer>
+  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
+</footer>
+
+<script src="cart.js"></script>
+<script>
+let currentMode = 'single';
+
+function render(){
+  const cart = getCart();
+  const subhead = document.getElementById('subhead');
+  const content = document.getElementById('cart-content');
+
+  if(cart.length === 0){
+    subhead.textContent = "Votre panier est vide.";
+    content.innerHTML = `
+      <div class="empty-cart">
+        Aucun article pour l'instant.<br><br>
+        <a href="index.html">← Parcourir les catégories</a>
+      </div>
+    `;
+    return;
+  }
+
+  subhead.textContent = cart.reduce((s,i)=>s+i.qty,0) + " article(s) dans votre panier";
+
+  const itemsHtml = cart.map(item => `
+    <div class="cart-item">
+      <span class="icon">🦷</span>
+      <div class="info">
+        <p class="name">${item.name}</p>
+        <div class="meta">${item.tag} · ${item.prices.length} marchands comparés</div>
+      </div>
+      <div class="qty">
+        <button class="qty-btn" onclick="changeQty('${item.id}', ${item.qty - 1})">−</button>
+        ${item.qty}
+        <button class="qty-btn" onclick="changeQty('${item.id}', ${item.qty + 1})">+</button>
+      </div>
+      <button class="remove-btn" onclick="removeItem('${item.id}')">Retirer</button>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <div class="item-list">${itemsHtml}</div>
+    <span class="clear-link" onclick="clearAll()">Vider le panier</span>
+
+    <div class="mode-tabs">
+      <div class="mode-tab ${currentMode==='single'?'active':''}" onclick="setMode('single')">
+        Un seul marchand
+        <span class="desc">Tout commander au même endroit</span>
+      </div>
+      <div class="mode-tab ${currentMode==='multi'?'active':''}" onclick="setMode('multi')">
+        Meilleur prix par article
+        <span class="desc">Accepter plusieurs commandes</span>
+      </div>
+    </div>
+
+    <div class="mode-panel" id="mode-panel"></div>
+  `;
+
+  renderModePanel(cart);
+}
+
+function setMode(mode){
+  currentMode = mode;
+  render();
+}
+
+function changeQty(id, qty){
+  if(qty < 1){ removeItem(id); return; }
+  updateCartQty(id, qty);
+  render();
+}
+
+function removeItem(id){
+  removeFromCart(id);
+  render();
+}
+
+function clearAll(){
+  clearCart();
+  render();
+}
+
+function renderModePanel(cart){
+  const panel = document.getElementById('mode-panel');
+  if(currentMode === 'single'){
+    panel.innerHTML = renderSingleMerchantMode(cart);
+  } else {
+    panel.innerHTML = renderMultiMerchantMode(cart);
+  }
+}
+
+// MODE 1 : un seul marchand — on ne garde que les marchands qui ont TOUS les articles du panier
+function renderSingleMerchantMode(cart){
+  // Compte, pour chaque marchand, combien d'articles du panier il propose
+  const merchantSet = {};
+  cart.forEach(item => {
+    item.prices.forEach(pr => {
+      if(!merchantSet[pr.merchant]) merchantSet[pr.merchant] = { covered: 0, total: 0 };
+      merchantSet[pr.merchant].covered += 1;
+      merchantSet[pr.merchant].total += pr.value * item.qty;
+    });
+  });
+
+  const fullCoverage = Object.entries(merchantSet)
+    .filter(([m, d]) => d.covered === cart.length)
+    .map(([m, d]) => ({ merchant: m, total: d.total }))
+    .sort((a,b) => a.total - b.total);
+
+  if(fullCoverage.length === 0){
+    // Aucun marchand ne propose tous les articles — on montre la meilleure couverture partielle
+    const partial = Object.entries(merchantSet)
+      .map(([m, d]) => ({ merchant: m, covered: d.covered, total: d.total }))
+      .sort((a,b) => b.covered - a.covered || a.total - b.total)
+      .slice(0, 5);
+
+    const rows = partial.map((r, i) => `
+      <div class="merchant-total-row ${i===0?'best':''}">
+        <span class="rank">${i+1}</span>
+        <div>
+          <div class="mname">${r.merchant}</div>
+          <div class="mcoverage">${r.covered} / ${cart.length} articles disponibles</div>
+        </div>
+        <span class="mtotal">${r.total.toFixed(2)} €</span>
+      </div>
+    `).join('');
+
+    return `
+      <h2>Un seul marchand</h2>
+      <div class="hint">Aucun marchand ne propose la totalité des ${cart.length} articles de votre panier. Voici les marchands qui en couvrent le plus, avec le sous-total correspondant (hors articles manquants).</div>
+      ${rows}
+    `;
+  }
+
+  const best = fullCoverage[0];
+  const rows = fullCoverage.map((r, i) => `
+    <div class="merchant-total-row ${i===0?'best':''}">
+      <span class="rank">${i+1}</span>
+      <div class="mname">${r.merchant}</div>
+      <span class="mtotal">${r.total.toFixed(2)} €</span>
+    </div>
+  `).join('');
+
+  return `
+    <h2>Un seul marchand</h2>
+    <div class="hint">Marchands proposant l'intégralité de vos ${cart.length} article(s), classés du moins cher au plus cher pour tout commander au même endroit.</div>
+    <div class="best-banner"><strong>${best.merchant}</strong> propose le total le plus bas pour commander tous vos articles en une seule fois.</div>
+    ${rows}
+    <div class="grand-total">
+      <span class="label">Total chez ${best.merchant}</span>
+      <span class="value">${best.total.toFixed(2)} €</span>
+    </div>
+  `;
+}
+
+// MODE 2 : meilleur prix par article, quel que soit le nombre de marchands nécessaires
+function renderMultiMerchantMode(cart){
+  const groups = {};
+  let grandTotal = 0;
+
+  cart.forEach(item => {
+    const cheapest = [...item.prices].sort((a,b)=>a.value-b.value)[0];
+    const lineTotal = cheapest.value * item.qty;
+    grandTotal += lineTotal;
+    if(!groups[cheapest.merchant]) groups[cheapest.merchant] = [];
+    groups[cheapest.merchant].push({ name: item.name, qty: item.qty, unit: cheapest.value, lineTotal });
+  });
+
+  const merchantCount = Object.keys(groups).length;
+
+  const groupsHtml = Object.entries(groups).map(([merchant, items]) => {
+    const subtotal = items.reduce((s,i)=>s+i.lineTotal, 0);
+    const itemsHtml = items.map(i => `
+      <div class="gitem"><span>${i.name} ${i.qty > 1 ? '× '+i.qty : ''}</span><span>${i.lineTotal.toFixed(2)} €</span></div>
+    `).join('');
+    return `
+      <div class="multi-group">
+        <div class="gmerchant">${merchant}</div>
+        ${itemsHtml}
+        <div class="gsubtotal">Sous-total : ${subtotal.toFixed(2)} €</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <h2>Meilleur prix par article</h2>
+    <div class="hint">Le prix le plus bas est sélectionné pour chaque article indépendamment, quitte à commander chez plusieurs marchands différents.</div>
+    <div class="best-banner">Cette combinaison nécessite <strong>${merchantCount} commande${merchantCount>1?'s':''}</strong> chez <strong>${merchantCount} marchand${merchantCount>1?'s':''} différent${merchantCount>1?'s':''}</strong>.</div>
+    ${groupsHtml}
+    <div class="grand-total">
+      <span class="label">Total (multi-marchands)</span>
+      <span class="value">${grandTotal.toFixed(2)} €</span>
+    </div>
+  `;
+}
+
+render();
+</script>
+
+</body>
+</html>
