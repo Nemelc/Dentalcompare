@@ -184,6 +184,18 @@
     flex-direction:column;
     gap:16px;
   }
+  .prod-photo{
+    width:100%;
+    height:120px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--steel);
+    margin-bottom:12px;
+  }
   .card-top{
     display:flex;
     flex-direction:column;
@@ -841,6 +853,16 @@ function slugify(str){
     .replace(/(^-|-$)/g, '');
 }
 
+// Icône générique par catégorie — sera remplacée par la vraie photo produit une fois les flux fournisseurs branchés
+const CATEGORY_ICONS = {
+  "usage-unique": "🧤",
+  "anesthesie": "💉",
+  "empreintes": "🦷",
+  "rotatifs": "⚙️",
+  "endodontie": "🩹",
+  "hygiene": "🧴"
+};
+
 function renderCard(p){
   const sorted = [...p.prices].sort((a,b)=>a.value-b.value);
   const min = sorted[0].value;
@@ -864,6 +886,7 @@ function renderCard(p){
   return `
     <div class="card">
       <div class="card-top">
+        <div class="prod-photo" style="font-size:36px;">${CATEGORY_ICONS[currentCategory] || '🦷'}</div>
         <span class="tag">${p.tag}</span>
         <p class="prod-name">${p.name}</p>
         <div class="prod-sub">${p.sub}</div>
