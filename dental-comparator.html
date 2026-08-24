@@ -222,16 +222,18 @@
     line-height:1.15;
   }
   .price-hero .pct-pill{
-    display:inline-block;
-    margin-top:6px;
+    display:block;
+    max-width:200px;
+    margin:6px auto 0 auto;
     background:var(--mauve-soft);
     color:var(--mauve);
     font-family:'IBM Plex Mono', monospace;
     font-size:10px;
     font-weight:600;
-    padding:3px 10px;
-    border-radius:20px;
-    white-space:nowrap;
+    padding:5px 10px;
+    border-radius:12px;
+    line-height:1.4;
+    white-space:normal;
   }
   .tag{
     display:inline-block;
@@ -313,9 +315,9 @@
   }
   .rank-row{
     display:grid;
-    grid-template-columns:20px 88px 1fr 62px;
+    grid-template-columns:20px 78px 1fr 92px;
     align-items:center;
-    gap:10px;
+    gap:8px;
   }
   .rank-row .num{
     font-family:'IBM Plex Mono', monospace;
