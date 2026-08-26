@@ -399,7 +399,6 @@
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input type="text" id="header-search" placeholder="Rechercher une référence, une marque…" onkeyup="if(event.key==='Enter' && this.value.trim().length>1){ window.location.href='dental-comparator.html?q='+encodeURIComponent(this.value.trim()); }">
   </div>
-  <div class="top-note">6 catégories · 94 références · 18 marchands</div>
   <a href="panier.html" class="cart-link">
     🛒 Panier
     <span id="cart-badge" class="cart-badge">0</span>
@@ -415,10 +414,6 @@
     <a href="dental-comparator.html?cat=rotatifs">Instruments rotatifs <span class="badge">19</span></a>
     <a href="dental-comparator.html?cat=endodontie">Endodontie <span class="badge">16</span></a>
     <a href="dental-comparator.html?cat=hygiene">Hygiène &amp; stérilisation <span class="badge">15</span></a>
-
-    <div class="sidebar-cta">
-      <p>Les 6 catégories sont maintenant comparables.</p>
-    </div>
   </nav>
 
   <main>
@@ -427,7 +422,7 @@
       <div>
         <span class="eyebrow">Pour les chirurgiens-dentistes</span>
         <h1>Le bon prix, sur le bon consommable, sans ouvrir dix onglets.</h1>
-        <p>On compare pour vous 17 marchands dentaires (Dental Good Deal, GACD, Dentaltix, Dentalprivé, Apol...) sur les références que vous commandez chaque mois.</p>
+        <p>On compare pour vous 18 marchands dentaires (Dental Good Deal, GACD, Dentaltix, Dentalprivé, Apol...) sur les références que vous commandez chaque mois.</p>
         <a class="btn-primary" href="dental-comparator.html?cat=usage-unique">Voir le comparatif →</a>
       </div>
       <div class="hero-readout">
@@ -459,48 +454,6 @@
       <div class="deal-grid" id="deal-grid"></div>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <h2>Parcourir par catégorie</h2>
-      </div>
-      <div class="push-grid">
-        <a class="push-tile" href="dental-comparator.html?cat=usage-unique">
-          <span class="icon">01</span>
-          <span class="name">Usage unique</span>
-          <span class="count">Gants, compresses, masques…</span>
-        </a>
-        <a class="push-tile" href="dental-comparator.html?cat=anesthesie">
-          <span class="icon">02</span>
-          <span class="name">Anesthésie</span>
-          <span class="count">Aiguilles, carpules, sprays…</span>
-        </a>
-        <a class="push-tile" href="dental-comparator.html?cat=empreintes">
-          <span class="icon">03</span>
-          <span class="name">Empreintes</span>
-          <span class="count">Alginates, silicones, plâtre…</span>
-        </a>
-        <a class="push-tile" href="dental-comparator.html?cat=rotatifs">
-          <span class="icon">04</span>
-          <span class="name">Instruments rotatifs</span>
-          <span class="count">Fraises, disques, brossettes…</span>
-        </a>
-        <a class="push-tile" href="dental-comparator.html?cat=endodontie">
-          <span class="icon">05</span>
-          <span class="name">Endodontie</span>
-          <span class="count">Limes, gutta percha, digues…</span>
-        </a>
-        <a class="push-tile" href="dental-comparator.html?cat=hygiene">
-          <span class="icon">06</span>
-          <span class="name">Hygiène &amp; stérilisation</span>
-          <span class="count">Sachets, désinfectants…</span>
-        </a>
-      </div>
-    </section>
-
-    <p class="disclosure">
-      <strong>Information :</strong> ce site contient des liens affiliés. Lorsque vous cliquez sur « Voir l'offre » et effectuez un achat chez l'un de nos partenaires marchands, nous pouvons percevoir une commission, sans surcoût pour vous.
-    </p>
-
   </main>
 </div>
 
@@ -517,7 +470,19 @@ const deals = [
   { name: "Spray de refroidissement 200 ml", tag: "Anesthésie", price: 8.20, pct: 13, cat: "anesthesie" },
   { name: "Alginate fraguado rapide 450 g", tag: "Empreintes", price: 4.60, pct: 13, cat: "empreintes" },
   { name: "Gel anesthésique de surface 30 g", tag: "Anesthésie", price: 10.60, pct: 11, cat: "anesthesie" },
-  { name: "Porte-empreintes perforés (set)", tag: "Empreintes", price: 5.20, pct: 12, cat: "empreintes" }
+  { name: "Porte-empreintes perforés (set)", tag: "Empreintes", price: 5.20, pct: 12, cat: "empreintes" },
+  { name: "Masques chirurgicaux 3 plis — Boîte 50", tag: "Usage unique", price: 4.10, pct: 14, cat: "usage-unique" },
+  { name: "Rouleaux salivaires — Sachet 2000", tag: "Usage unique", price: 9.75, pct: 8, cat: "usage-unique" },
+  { name: "Aiguilles d'anesthésie — Boîte 100", tag: "Anesthésie", price: 11.95, pct: 10, cat: "anesthesie" },
+  { name: "Carpules anesthésiques — Boîte 50", tag: "Anesthésie", price: 32.50, pct: 12, cat: "anesthesie" },
+  { name: "Silicone Putty Soft — 2x300 ml", tag: "Empreintes", price: 24.90, pct: 9, cat: "empreintes" },
+  { name: "Plâtre dentaire type IV — 5 kg", tag: "Empreintes", price: 39.90, pct: 7, cat: "empreintes" },
+  { name: "Fraises carbure boule — Boîte 10", tag: "Instruments rotatifs", price: 13.90, pct: 15, cat: "rotatifs" },
+  { name: "Disques à polir composite — Kit", tag: "Instruments rotatifs", price: 20.90, pct: 11, cat: "rotatifs" },
+  { name: "Limes K-file manuelles — Boîte 6", tag: "Endodontie", price: 6.40, pct: 13, cat: "endodontie" },
+  { name: "Pointes de gutta percha — Boîte 120", tag: "Endodontie", price: 8.30, pct: 9, cat: "endodontie" },
+  { name: "Sachets de stérilisation — Boîte 200", tag: "Hygiène", price: 15.90, pct: 12, cat: "hygiene" },
+  { name: "Gel hydroalcoolique — Flacon 500 ml", tag: "Hygiène", price: 6.90, pct: 10, cat: "hygiene" }
 ];
 
 document.getElementById('deal-grid').innerHTML = deals.map(d => `
