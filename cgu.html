@@ -8,8 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #F6F7F6; --card: #FFFFFF; --ink: #16241F; --ink-soft: #57655F;
-    --line: #DEE4E1; --teal: #1F6F63; --teal-soft: #E4EFEC; --radius: 10px;
+    --bg: #FAF6F2; --card: #FFFFFF; --ink: #2B2119; --ink-soft: #6E5E4F;
+    --line: #EAE1D6; --teal: #F4600C; --teal-soft: #FCDCC0; --radius: 10px;
   }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
@@ -22,7 +22,7 @@
     display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
   .brand .mark{ width:26px;height:26px; border:2px solid #F6F7F6; border-radius:6px;
     display:flex;align-items:center;justify-content:center; font-size:12px; font-family:'IBM Plex Mono', monospace; }
-  .brand small{ display:block; font-weight:400; font-size:10.5px; color:#B9C4BF; }
+  .brand small{ display:block; font-weight:400; font-size:10.5px; color:#C9B8A4; }
 
   main{ max-width:760px; margin:0 auto; padding:40px 32px 60px 32px; }
   h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px 0; }
@@ -47,8 +47,12 @@
 
 <header class="top">
   <a class="brand" href="index.html">
-    <span class="mark">Dt</span>
-    <div>DentaCompare<small>Prototype — données d'exemple</small></div>
+    <span class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3c-2.2 0-3.5 1.1-4.8 1.1C5.9 4.1 4 3.3 4 6.2c0 2.6.9 4.3 1.3 7.1.3 2.3.6 6.2 2.2 6.2 1.7 0 1.5-4.3 2.6-4.3s.9 4.3 2.6 4.3c1.6 0 1.9-3.9 2.2-6.2.4-2.8 1.3-4.5 1.3-7.1 0-2.9-1.9-2.1-3.2-1.1C15.5 4.1 14.2 3 12 3z"/>
+      </svg>
+    </span>
+    <div>DentaCompare</div>
   </a>
 </header>
 
@@ -131,7 +135,6 @@
 </main>
 
 <footer>
-  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
 </footer>
 
 </body>

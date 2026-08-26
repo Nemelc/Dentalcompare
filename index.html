@@ -8,16 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #F6F7F6;
+    --bg: #FAF6F2;
     --card: #FFFFFF;
-    --ink: #16241F;
-    --ink-soft: #57655F;
-    --line: #DEE4E1;
-    --teal: #1F6F63;
-    --teal-soft: #E4EFEC;
-    --mauve: #B96C86;
-    --mauve-soft: #F6E9ED;
-    --steel: #7C8B92;
+    --ink: #2B2119;
+    --ink-soft: #6E5E4F;
+    --line: #EAE1D6;
+    --teal: #F4600C;
+    --teal-soft: #FCDCC0;
+    --mauve: #1B7A93;
+    --mauve-soft: #D9EDF2;
+    --steel: #9C8975;
     --radius: 10px;
   }
   *{box-sizing:border-box;}
@@ -31,7 +31,10 @@
   a{ color:inherit; }
 
   header.top{
-    background:var(--ink);
+    position:relative;
+    overflow:hidden;
+    background:#211811;
+    border-bottom:3px solid var(--teal);
     color:#F6F7F6;
     padding:14px 32px;
     display:flex;
@@ -40,7 +43,20 @@
     flex-wrap:wrap;
     gap:12px;
   }
+  header.top::before{
+    content:"";
+    position:absolute;
+    top:-70px; right:8%;
+    width:260px; height:260px;
+    background:var(--teal);
+    filter:blur(80px);
+    opacity:0.45;
+    border-radius:50%;
+    pointer-events:none;
+  }
   .brand{
+    position:relative;
+    z-index:1;
     font-family:'Space Grotesk', sans-serif;
     font-weight:700;
     font-size:19px;
@@ -52,19 +68,34 @@
     color:inherit;
   }
   .brand .mark{
-    width:26px;height:26px;
-    border:2px solid #F6F7F6;
-    border-radius:6px;
+    width:30px;height:30px;
+    background:rgba(255,255,255,0.12);
+    border:1.5px solid rgba(255,255,255,0.4);
+    border-radius:8px;
     display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand .mark svg{ width:18px; height:18px; }
+  .tagline{
+    position:relative;
+    z-index:1;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-style:italic;
     font-size:12px;
-    font-family:'IBM Plex Mono', monospace;
+    color:#F3D9C4;
+    padding-left:14px;
+    margin-left:2px;
+    border-left:1px solid rgba(255,255,255,0.3);
+    display:none;
+  }
+  @media (min-width:900px){ .tagline{ display:inline-block; } }
   }
   .brand small{
     display:block;
     font-family:'IBM Plex Sans', sans-serif;
     font-weight:400;
     font-size:10.5px;
-    color:#B9C4BF;
+    color:#C9B8A4;
     letter-spacing:0.02em;
   }
   .search-bar{
@@ -72,7 +103,7 @@
     max-width:440px;
     display:flex;
     align-items:center;
-    background:#233830;
+    background:#3A2E22;
     border-radius:7px;
     padding:9px 14px;
     gap:8px;
@@ -86,10 +117,10 @@
     font-size:13px;
     flex:1;
   }
-  .search-bar input::placeholder{ color:#8FA39C; }
+  .search-bar input::placeholder{ color:#C9AE94; }
   .top-note{
     font-size:11.5px;
-    color:#B9C4BF;
+    color:#C9B8A4;
     font-family:'IBM Plex Mono', monospace;
     white-space:nowrap;
   }
@@ -102,11 +133,11 @@
     text-decoration:none;
     font-size:13px;
     font-weight:600;
-    background:#233830;
+    background:#3A2E22;
     padding:8px 14px;
     border-radius:20px;
   }
-  .cart-link:hover{ background:#2E453C; }
+  .cart-link:hover{ background:#4A3B2C; }
   .cart-badge{
     display:none;
     align-items:center;
@@ -204,7 +235,7 @@
     font-size:11px;
     text-transform:uppercase;
     letter-spacing:0.06em;
-    color:#8FD8C7;
+    color:#F4A46B;
     display:block;
     margin-bottom:10px;
   }
@@ -217,7 +248,7 @@
   }
   .hero-banner p{
     font-size:13.5px;
-    color:#B9C4BF;
+    color:#C9B8A4;
     max-width:440px;
     margin:0 0 18px 0;
     line-height:1.5;
@@ -237,8 +268,8 @@
   .btn-primary:hover{ background:#18564D; }
 
   .hero-readout{
-    background:#1E2E28;
-    border:1px solid #2E4038;
+    background:#3A2010;
+    border:1px solid #5A3418;
     border-radius:12px;
     padding:18px;
     min-width:260px;
@@ -248,7 +279,7 @@
     font-size:9.5px;
     text-transform:uppercase;
     letter-spacing:0.05em;
-    color:#8FA39C;
+    color:#C9AE94;
     margin-bottom:10px;
   }
   .hero-readout .rname{
@@ -259,13 +290,13 @@
     color:#F6F7F6;
   }
   .rrow{ display:grid; grid-template-columns:16px 1fr 58px; align-items:center; gap:8px; margin-bottom:7px; }
-  .rrow .n{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6B8079; }
-  .rrow.best .n{ color:#3FAF97; font-weight:700; }
-  .rtrack{ height:6px; background:#0F1815; border-radius:3px; overflow:hidden; }
-  .rfill{ height:100%; background:#6B8079; border-radius:3px; }
-  .rrow.best .rfill{ background:#3FAF97; }
-  .rrow .p{ font-family:'IBM Plex Mono', monospace; font-size:11px; text-align:right; color:#DDE6E2; }
-  .rrow.best .p{ color:#3FAF97; font-weight:700; }
+  .rrow .n{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:#9C8975; }
+  .rrow.best .n{ color:#F4600C; font-weight:700; }
+  .rtrack{ height:6px; background:#1E1108; border-radius:3px; overflow:hidden; }
+  .rfill{ height:100%; background:#9C8975; border-radius:3px; }
+  .rrow.best .rfill{ background:#F4600C; }
+  .rrow .p{ font-family:'IBM Plex Mono', monospace; font-size:11px; text-align:right; color:#F0E4D6; }
+  .rrow.best .p{ color:#F4600C; font-weight:700; }
 
   .section{ margin-bottom:40px; }
   .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
@@ -354,17 +385,21 @@
 
 <header class="top">
   <a class="brand" href="index.html">
-    <span class="mark">Dt</span>
+    <span class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3c-2.2 0-3.5 1.1-4.8 1.1C5.9 4.1 4 3.3 4 6.2c0 2.6.9 4.3 1.3 7.1.3 2.3.6 6.2 2.2 6.2 1.7 0 1.5-4.3 2.6-4.3s.9 4.3 2.6 4.3c1.6 0 1.9-3.9 2.2-6.2.4-2.8 1.3-4.5 1.3-7.1 0-2.9-1.9-2.1-3.2-1.1C15.5 4.1 14.2 3 12 3z"/>
+      </svg>
+    </span>
     <div>
       DentaCompare
-      <small>Prototype — données d'exemple</small>
     </div>
   </a>
+  <span class="tagline">Le prix le plus bas du marché, sur chaque référence</span>
   <div class="search-bar">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" placeholder="Rechercher une référence, une marque…">
+    <input type="text" id="header-search" placeholder="Rechercher une référence, une marque…" onkeyup="if(event.key==='Enter' && this.value.trim().length>1){ window.location.href='dental-comparator.html?q='+encodeURIComponent(this.value.trim()); }">
   </div>
-  <div class="top-note">6 catégories · 31 références · 17 marchands</div>
+  <div class="top-note">6 catégories · 94 références · 18 marchands</div>
   <a href="panier.html" class="cart-link">
     🛒 Panier
     <span id="cart-badge" class="cart-badge">0</span>
@@ -374,12 +409,12 @@
 <div class="layout">
   <nav class="sidebar">
     <div class="sidebar-label">Catégories</div>
-    <a href="dental-comparator.html?cat=usage-unique">Usage unique <span class="badge">6</span></a>
-    <a href="dental-comparator.html?cat=anesthesie">Anesthésie <span class="badge">5</span></a>
-    <a href="dental-comparator.html?cat=empreintes">Empreintes <span class="badge">5</span></a>
-    <a href="dental-comparator.html?cat=rotatifs">Instruments rotatifs <span class="badge">5</span></a>
-    <a href="dental-comparator.html?cat=endodontie">Endodontie <span class="badge">5</span></a>
-    <a href="dental-comparator.html?cat=hygiene">Hygiène &amp; stérilisation <span class="badge">5</span></a>
+    <a href="dental-comparator.html?cat=usage-unique">Usage unique <span class="badge">16</span></a>
+    <a href="dental-comparator.html?cat=anesthesie">Anesthésie <span class="badge">14</span></a>
+    <a href="dental-comparator.html?cat=empreintes">Empreintes <span class="badge">14</span></a>
+    <a href="dental-comparator.html?cat=rotatifs">Instruments rotatifs <span class="badge">19</span></a>
+    <a href="dental-comparator.html?cat=endodontie">Endodontie <span class="badge">16</span></a>
+    <a href="dental-comparator.html?cat=hygiene">Hygiène &amp; stérilisation <span class="badge">15</span></a>
 
     <div class="sidebar-cta">
       <p>Les 6 catégories sont maintenant comparables.</p>
@@ -470,7 +505,6 @@
 </div>
 
 <footer>
-  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
   &nbsp;·&nbsp; <a href="mentions-legales.html" style="color:inherit;">Mentions légales</a>
   &nbsp;·&nbsp; <a href="cgu.html" style="color:inherit;">CGU</a>
 </footer>

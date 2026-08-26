@@ -8,23 +8,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #F6F7F6; --card: #FFFFFF; --ink: #16241F; --ink-soft: #57655F;
-    --line: #DEE4E1; --teal: #1F6F63; --teal-soft: #E4EFEC;
-    --mauve: #B96C86; --mauve-soft: #F6E9ED; --steel: #7C8B92; --radius: 10px;
+    --bg: #FAF6F2; --card: #FFFFFF; --ink: #2B2119; --ink-soft: #6E5E4F;
+    --line: #EAE1D6; --teal: #F4600C; --teal-soft: #FCDCC0;
+    --mauve: #1B7A93; --mauve-soft: #D9EDF2; --steel: #9C8975; --radius: 10px;
   }
   *{box-sizing:border-box;}
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
   a{ color:inherit; }
   header.top{
-    background:var(--ink); color:#F6F7F6; padding:14px 32px;
+    position:relative; overflow:hidden;
+    background:#211811; border-bottom:3px solid var(--teal);
+    color:#F6F7F6; padding:14px 32px;
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
   }
-  .brand{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em;
+  header.top::before{
+    content:""; position:absolute; top:-70px; right:8%;
+    width:260px; height:260px; background:var(--teal);
+    filter:blur(80px); opacity:0.45; border-radius:50%; pointer-events:none;
+  }
+  .brand{ position:relative; z-index:1; font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em;
     display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
-  .brand .mark{ width:26px;height:26px; border:2px solid #F6F7F6; border-radius:6px;
-    display:flex;align-items:center;justify-content:center; font-size:12px; font-family:'IBM Plex Mono', monospace; }
-  .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9C4BF; }
-  .top-note{ font-size:11.5px; color:#B9C4BF; font-family:'IBM Plex Mono', monospace; }
+  .brand .mark{ width:30px;height:30px; background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px;
+    display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+  .brand .mark svg{ width:18px; height:18px; }
+  .tagline{ position:relative; z-index:1; font-family:'IBM Plex Sans', sans-serif; font-style:italic; font-size:12px; color:#F3D9C4;
+    padding-left:14px; margin-left:2px; border-left:1px solid rgba(255,255,255,0.3); display:none; }
+  @media (min-width:900px){ .tagline{ display:inline-block; } }
+  .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#C9B8A4; }
+  .top-note{ position:relative; z-index:1; font-size:11.5px; color:#C9B8A4; font-family:'IBM Plex Mono', monospace; }
   .cart-link{
     position:relative;
     display:flex;
@@ -34,11 +45,11 @@
     text-decoration:none;
     font-size:13px;
     font-weight:600;
-    background:#233830;
+    background:#3A2E22;
     padding:8px 14px;
     border-radius:20px;
   }
-  .cart-link:hover{ background:#2E453C; }
+  .cart-link:hover{ background:#4A3B2C; }
   .cart-badge{
     display:none;
     align-items:center;
@@ -169,9 +180,14 @@
 
 <header class="top">
   <a class="brand" href="index.html">
-    <span class="mark">Dt</span>
-    <div>DentaCompare<small>Prototype — données d'exemple</small></div>
+    <span class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3c-2.2 0-3.5 1.1-4.8 1.1C5.9 4.1 4 3.3 4 6.2c0 2.6.9 4.3 1.3 7.1.3 2.3.6 6.2 2.2 6.2 1.7 0 1.5-4.3 2.6-4.3s.9 4.3 2.6 4.3c1.6 0 1.9-3.9 2.2-6.2.4-2.8 1.3-4.5 1.3-7.1 0-2.9-1.9-2.1-3.2-1.1C15.5 4.1 14.2 3 12 3z"/>
+      </svg>
+    </span>
+    <div>DentaCompare</div>
   </a>
+  <span class="tagline">Le prix le plus bas du marché, sur chaque référence</span>
   <div class="top-note">Fiche produit</div>
   <a href="panier.html" class="cart-link">
     🛒 Panier
@@ -196,7 +212,6 @@
 </div>
 
 <footer>
-  Prototype construit avec Claude — données d'exemple, aucun lien d'affiliation réel actif pour l'instant.
   &nbsp;·&nbsp; <a href="mentions-legales.html" style="color:inherit;">Mentions légales</a>
   &nbsp;·&nbsp; <a href="cgu.html" style="color:inherit;">CGU</a>
 </footer>
@@ -306,6 +321,175 @@ const CATEGORIES = {
           { merchant: "Doctor AI", value: 14.54 },
           { merchant: "edenta.eu", value: 14.43 },
         ]
+      },
+      {
+        name: "Canules d\'aspiration chirurgicale — Boîte de 100",
+        sub: "Ø 6mm, transparentes",
+        tag: "Aspiration",
+        prices: [
+          { merchant: "Apol", value: 13.25 },
+          { merchant: "La Boutique Du Dentiste", value: 14.31 },
+          { merchant: "Doctor Strong", value: 13.97 },
+          { merchant: "Dentalclick", value: 12.12 },
+          { merchant: "Dentaireachat", value: 14.74 },
+          { merchant: "Megadental", value: 12.17 },
+          { merchant: "B2B Dental", value: 12.86 },
+          { merchant: "Dentalprivé", value: 11.76 },
+          { merchant: "Doctor AI", value: 12.46 },
+          { merchant: "GACD", value: 13.14 },
+          { merchant: "Discount Dentaire", value: 13.84 },
+          { merchant: "Henry Schein", value: 13.45 },
+          { merchant: "Dentaltix", value: 12.22 },
+        ]
+      },
+      {
+        name: "Champs opératoires troués — Paquet de 100",
+        sub: "Non tissés, stériles",
+        tag: "Champs",
+        prices: [
+          { merchant: "Dentalclick", value: 20.62 },
+          { merchant: "Dentalprivé", value: 20.91 },
+          { merchant: "La Boutique Du Dentiste", value: 21.35 },
+          { merchant: "Praxisdienst", value: 18.93 },
+          { merchant: "Doctor AI", value: 18.79 },
+          { merchant: "GACD", value: 21.66 },
+        ]
+      },
+      {
+        name: "Charlottes jetables — Boîte de 100",
+        sub: "Non tissé, élastiquées",
+        tag: "Protection",
+        prices: [
+          { merchant: "La Boutique Du Dentiste", value: 7.25 },
+          { merchant: "Doctor AI", value: 6.69 },
+          { merchant: "GACD", value: 7.37 },
+          { merchant: "Dentaireachat", value: 7.19 },
+          { merchant: "Praxisdienst", value: 6.02 },
+          { merchant: "B2B Dental", value: 7.47 },
+          { merchant: "Dental Budget", value: 7.34 },
+          { merchant: "Doctor Strong", value: 6.33 },
+          { merchant: "Discount Dentaire", value: 7.11 },
+        ]
+      },
+      {
+        name: "Surchaussures jetables — Boîte de 100",
+        sub: "Antidérapantes",
+        tag: "Protection",
+        prices: [
+          { merchant: "GACD", value: 7.62 },
+          { merchant: "Dentaltix", value: 7.45 },
+          { merchant: "Henry Schein", value: 8.49 },
+          { merchant: "La Boutique Du Dentiste", value: 7.97 },
+          { merchant: "Dental Budget", value: 9.26 },
+          { merchant: "Doctor Strong", value: 8.0 },
+          { merchant: "edenta.eu", value: 8.25 },
+          { merchant: "Dentalprivé", value: 8.57 },
+          { merchant: "Discount Dentaire", value: 7.32 },
+          { merchant: "B2B Dental", value: 8.0 },
+        ]
+      },
+      {
+        name: "Blouses de soin jetables — Boîte de 50",
+        sub: "Manches longues, non tissé",
+        tag: "Protection",
+        prices: [
+          { merchant: "Dental Budget", value: 24.55 },
+          { merchant: "Apol", value: 26.95 },
+          { merchant: "Dentalprivé", value: 29.51 },
+          { merchant: "Megadental", value: 30.92 },
+          { merchant: "Henry Schein", value: 30.77 },
+          { merchant: "edenta.eu", value: 27.34 },
+          { merchant: "Dental Good Deal", value: 26.78 },
+          { merchant: "Doctor AI", value: 29.52 },
+        ]
+      },
+      {
+        name: "Cupules à prophylaxie jetables — Sachet de 100",
+        sub: "Assorties, jetables",
+        tag: "Prophylaxie",
+        prices: [
+          { merchant: "Apol", value: 10.55 },
+          { merchant: "Henry Schein", value: 11.07 },
+          { merchant: "Dental Budget", value: 8.95 },
+          { merchant: "Doctor AI", value: 10.29 },
+          { merchant: "La Boutique Du Dentiste", value: 9.86 },
+          { merchant: "edenta.eu", value: 10.43 },
+          { merchant: "GACD", value: 9.03 },
+          { merchant: "Doctor Strong", value: 11.21 },
+          { merchant: "Dentalprivé", value: 10.65 },
+          { merchant: "Praxisdienst", value: 9.38 },
+          { merchant: "B2B Dental", value: 10.02 },
+          { merchant: "Megadental", value: 11.45 },
+          { merchant: "Dentaltix", value: 10.22 },
+          { merchant: "Dental Good Deal", value: 9.76 },
+        ]
+      },
+      {
+        name: "Cales-bouche jetables — Sachet de 50",
+        sub: "Silicone souple, tailles assorties",
+        tag: "Usage unique",
+        prices: [
+          { merchant: "Dental Good Deal", value: 16.11 },
+          { merchant: "edenta.eu", value: 14.61 },
+          { merchant: "GACD", value: 15.89 },
+          { merchant: "Doctor Strong", value: 16.38 },
+          { merchant: "Apol", value: 17.09 },
+          { merchant: "La Boutique Du Dentiste", value: 13.67 },
+          { merchant: "Dental Budget", value: 15.6 },
+          { merchant: "Dentalprivé", value: 15.38 },
+          { merchant: "B2B Dental", value: 15.29 },
+          { merchant: "Doctor AI", value: 13.52 },
+          { merchant: "Megadental", value: 13.68 },
+        ]
+      },
+      {
+        name: "Gants d\'examen vinyle — Boîte de 100",
+        sub: "Non poudrés, sans latex",
+        tag: "Gants",
+        prices: [
+          { merchant: "Praxisdienst", value: 8.13 },
+          { merchant: "Dental Good Deal", value: 6.96 },
+          { merchant: "edenta.eu", value: 8.62 },
+          { merchant: "Doctor AI", value: 8.7 },
+          { merchant: "Apol", value: 8.31 },
+          { merchant: "B2B Dental", value: 8.81 },
+          { merchant: "Dental Budget", value: 7.43 },
+          { merchant: "Discount Dentaire", value: 8.79 },
+        ]
+      },
+      {
+        name: "Serviettes de table jetables — Paquet de 500",
+        sub: "2 plis, coloris bleu",
+        tag: "Protection",
+        prices: [
+          { merchant: "Dentaltix", value: 19.94 },
+          { merchant: "Doctor Strong", value: 21.73 },
+          { merchant: "Discount Dentaire", value: 21.95 },
+          { merchant: "Henry Schein", value: 21.54 },
+          { merchant: "La Boutique Du Dentiste", value: 20.59 },
+          { merchant: "Dentaireachat", value: 17.5 },
+          { merchant: "Dentalclick", value: 21.35 },
+          { merchant: "Praxisdienst", value: 21.47 },
+          { merchant: "Dental Budget", value: 19.83 },
+        ]
+      },
+      {
+        name: "Godets doseurs jetables — Sachet de 200",
+        sub: "Gradués, plastique",
+        tag: "Accessoires",
+        prices: [
+          { merchant: "Megadental", value: 5.58 },
+          { merchant: "Dentalprivé", value: 5.63 },
+          { merchant: "Dentaltix", value: 4.76 },
+          { merchant: "La Boutique Du Dentiste", value: 4.82 },
+          { merchant: "Apol", value: 5.54 },
+          { merchant: "Praxisdienst", value: 4.82 },
+          { merchant: "Doctor AI", value: 5.94 },
+          { merchant: "Dental Budget", value: 4.83 },
+          { merchant: "Henry Schein", value: 5.89 },
+          { merchant: "GACD", value: 5.49 },
+          { merchant: "edenta.eu", value: 5.6 },
+        ]
       }
     ]
   },
@@ -392,6 +576,169 @@ const CATEGORIES = {
           { merchant: "Henry Schein", value: 13.4 },
           { merchant: "B2B Dental", value: 10.91 },
           { merchant: "Dental Good Deal", value: 11.95 },
+        ]
+      },
+      {
+        name: "Carpules Mépivacaïne 3% sans vasoconstricteur — Boîte de 50",
+        sub: "Sans adrénaline",
+        tag: "Carpules",
+        prices: [
+          { merchant: "Doctor Strong", value: 44.56 },
+          { merchant: "Dentalclick", value: 38.91 },
+          { merchant: "GACD", value: 38.12 },
+          { merchant: "B2B Dental", value: 36.19 },
+          { merchant: "Dentaltix", value: 36.29 },
+          { merchant: "La Boutique Du Dentiste", value: 42.02 },
+          { merchant: "Dentaireachat", value: 34.92 },
+          { merchant: "Dentalprivé", value: 38.57 },
+          { merchant: "Doctor AI", value: 39.39 },
+          { merchant: "Praxisdienst", value: 37.49 },
+          { merchant: "edenta.eu", value: 38.76 },
+          { merchant: "Apol", value: 43.28 },
+          { merchant: "Henry Schein", value: 44.02 },
+          { merchant: "Megadental", value: 40.94 },
+        ]
+      },
+      {
+        name: "Aiguilles longues — Boîte de 100",
+        sub: "27G, bloc tronculaire",
+        tag: "Aiguilles",
+        prices: [
+          { merchant: "Henry Schein", value: 14.09 },
+          { merchant: "Apol", value: 13.1 },
+          { merchant: "Dentaireachat", value: 15.86 },
+          { merchant: "Dental Budget", value: 15.1 },
+          { merchant: "GACD", value: 15.68 },
+          { merchant: "Dental Good Deal", value: 14.87 },
+          { merchant: "Megadental", value: 13.59 },
+          { merchant: "Dentalclick", value: 15.15 },
+          { merchant: "Dentaltix", value: 14.93 },
+          { merchant: "Doctor AI", value: 12.71 },
+        ]
+      },
+      {
+        name: "Baume cicatrisant post-extraction — Tube 20 g",
+        sub: "Apaisant, usage professionnel",
+        tag: "Post-opératoire",
+        prices: [
+          { merchant: "B2B Dental", value: 12.43 },
+          { merchant: "Dentalprivé", value: 12.15 },
+          { merchant: "Dental Good Deal", value: 12.0 },
+          { merchant: "La Boutique Du Dentiste", value: 10.35 },
+          { merchant: "Doctor AI", value: 10.35 },
+          { merchant: "Dentalclick", value: 10.58 },
+          { merchant: "Henry Schein", value: 10.65 },
+          { merchant: "Praxisdienst", value: 12.33 },
+        ]
+      },
+      {
+        name: "Spray anesthésique de contact — Flacon 50 ml",
+        sub: "Lidocaïne, goût neutre",
+        tag: "Topique",
+        prices: [
+          { merchant: "Doctor Strong", value: 13.72 },
+          { merchant: "Dentalprivé", value: 15.6 },
+          { merchant: "Praxisdienst", value: 14.58 },
+          { merchant: "B2B Dental", value: 17.29 },
+          { merchant: "edenta.eu", value: 13.65 },
+          { merchant: "Apol", value: 15.7 },
+          { merchant: "Dentaireachat", value: 16.99 },
+          { merchant: "Discount Dentaire", value: 15.51 },
+          { merchant: "Doctor AI", value: 17.06 },
+          { merchant: "GACD", value: 16.26 },
+          { merchant: "Henry Schein", value: 16.47 },
+          { merchant: "Megadental", value: 13.48 },
+        ]
+      },
+      {
+        name: "Compresses hémostatiques résorbables — Boîte de 10",
+        sub: "Cellulose oxydée",
+        tag: "Hémostase",
+        prices: [
+          { merchant: "Dentalprivé", value: 26.88 },
+          { merchant: "Dentalclick", value: 24.78 },
+          { merchant: "Dental Budget", value: 24.32 },
+          { merchant: "Doctor Strong", value: 29.63 },
+          { merchant: "Discount Dentaire", value: 22.96 },
+          { merchant: "GACD", value: 25.49 },
+          { merchant: "Praxisdienst", value: 23.12 },
+          { merchant: "Megadental", value: 29.22 },
+          { merchant: "Dentaltix", value: 24.12 },
+          { merchant: "Dentaireachat", value: 23.71 },
+          { merchant: "Doctor AI", value: 28.94 },
+          { merchant: "Henry Schein", value: 29.07 },
+          { merchant: "Apol", value: 27.92 },
+          { merchant: "La Boutique Du Dentiste", value: 25.98 },
+        ]
+      },
+      {
+        name: "Sutures résorbables 4-0 — Boîte de 12",
+        sub: "Aiguille courbe 3/8",
+        tag: "Sutures",
+        prices: [
+          { merchant: "Dental Budget", value: 29.63 },
+          { merchant: "Doctor AI", value: 33.11 },
+          { merchant: "Dental Good Deal", value: 29.84 },
+          { merchant: "Discount Dentaire", value: 34.37 },
+          { merchant: "Praxisdienst", value: 36.05 },
+          { merchant: "Dentalclick", value: 36.94 },
+          { merchant: "Dentaireachat", value: 29.78 },
+          { merchant: "Apol", value: 36.82 },
+          { merchant: "GACD", value: 36.27 },
+          { merchant: "Dentaltix", value: 36.93 },
+          { merchant: "B2B Dental", value: 30.15 },
+          { merchant: "Doctor Strong", value: 36.1 },
+          { merchant: "Henry Schein", value: 35.61 },
+        ]
+      },
+      {
+        name: "Porte-aiguille chirurgical — Unité",
+        sub: "Inox, 14 cm",
+        tag: "Instruments",
+        prices: [
+          { merchant: "Dentalprivé", value: 26.57 },
+          { merchant: "Discount Dentaire", value: 26.06 },
+          { merchant: "Dentaireachat", value: 31.05 },
+          { merchant: "Dentalclick", value: 28.29 },
+          { merchant: "Praxisdienst", value: 30.93 },
+          { merchant: "Megadental", value: 27.73 },
+          { merchant: "B2B Dental", value: 27.53 },
+          { merchant: "Dentaltix", value: 29.48 },
+          { merchant: "Apol", value: 31.62 },
+          { merchant: "Doctor Strong", value: 29.04 },
+          { merchant: "GACD", value: 25.93 },
+          { merchant: "La Boutique Du Dentiste", value: 28.59 },
+          { merchant: "Henry Schein", value: 31.19 },
+          { merchant: "Dental Good Deal", value: 28.92 },
+        ]
+      },
+      {
+        name: "Ciseaux à suture — Unité",
+        sub: "Inox, courbes",
+        tag: "Instruments",
+        prices: [
+          { merchant: "Dentaireachat", value: 21.72 },
+          { merchant: "Dentaltix", value: 25.05 },
+          { merchant: "La Boutique Du Dentiste", value: 22.15 },
+          { merchant: "Henry Schein", value: 25.01 },
+          { merchant: "Dental Good Deal", value: 21.53 },
+          { merchant: "Dental Budget", value: 22.26 },
+          { merchant: "Megadental", value: 24.32 },
+          { merchant: "Dentalclick", value: 20.56 },
+        ]
+      },
+      {
+        name: "Pince à hémostase — Unité",
+        sub: "Inox, droite 14 cm",
+        tag: "Instruments",
+        prices: [
+          { merchant: "Megadental", value: 25.47 },
+          { merchant: "Dentaireachat", value: 24.64 },
+          { merchant: "Henry Schein", value: 25.48 },
+          { merchant: "Praxisdienst", value: 23.92 },
+          { merchant: "Discount Dentaire", value: 26.86 },
+          { merchant: "Dentalclick", value: 23.38 },
+          { merchant: "Dental Budget", value: 22.77 },
         ]
       }
     ]
@@ -482,12 +829,174 @@ const CATEGORIES = {
           { merchant: "Dentalclick", value: 12.5 },
           { merchant: "Apol", value: 12.05 },
         ]
+      },
+      {
+        name: "Silicone Light Body — 2 cartouches de 50 ml",
+        sub: "Prise rapide, viscosité fluide",
+        tag: "Silicones",
+        prices: [
+          { merchant: "Discount Dentaire", value: 32.84 },
+          { merchant: "La Boutique Du Dentiste", value: 35.55 },
+          { merchant: "Dental Budget", value: 35.97 },
+          { merchant: "edenta.eu", value: 29.35 },
+          { merchant: "Henry Schein", value: 30.87 },
+          { merchant: "Megadental", value: 29.85 },
+          { merchant: "B2B Dental", value: 29.21 },
+          { merchant: "Dentalprivé", value: 32.7 },
+          { merchant: "Dentaireachat", value: 33.24 },
+          { merchant: "GACD", value: 31.29 },
+          { merchant: "Dentaltix", value: 30.44 },
+          { merchant: "Apol", value: 28.14 },
+          { merchant: "Dentalclick", value: 33.54 },
+        ]
+      },
+      {
+        name: "Pistolet auto-mélangeur — Unité",
+        sub: "Compatible cartouches 50ml",
+        tag: "Accessoires",
+        prices: [
+          { merchant: "B2B Dental", value: 37.13 },
+          { merchant: "Doctor Strong", value: 34.9 },
+          { merchant: "Dentalprivé", value: 40.44 },
+          { merchant: "Apol", value: 36.94 },
+          { merchant: "Dentalclick", value: 33.52 },
+          { merchant: "Praxisdienst", value: 34.77 },
+          { merchant: "Dental Budget", value: 42.66 },
+          { merchant: "La Boutique Du Dentiste", value: 39.4 },
+          { merchant: "Discount Dentaire", value: 40.12 },
+          { merchant: "Dentaireachat", value: 38.0 },
+          { merchant: "GACD", value: 38.58 },
+          { merchant: "Dental Good Deal", value: 40.6 },
+          { merchant: "Henry Schein", value: 37.91 },
+          { merchant: "Dentaltix", value: 37.57 },
+        ]
+      },
+      {
+        name: "Cire d\'occlusion — Boîte",
+        sub: "Feuilles roses, usage courant",
+        tag: "Occlusion",
+        prices: [
+          { merchant: "Apol", value: 16.94 },
+          { merchant: "La Boutique Du Dentiste", value: 18.78 },
+          { merchant: "Doctor Strong", value: 18.08 },
+          { merchant: "Henry Schein", value: 17.62 },
+          { merchant: "edenta.eu", value: 16.32 },
+          { merchant: "B2B Dental", value: 18.35 },
+          { merchant: "Discount Dentaire", value: 18.61 },
+          { merchant: "Dentalclick", value: 17.74 },
+          { merchant: "Dentaltix", value: 18.78 },
+          { merchant: "Megadental", value: 17.55 },
+          { merchant: "GACD", value: 15.32 },
+          { merchant: "Dental Good Deal", value: 18.42 },
+          { merchant: "Dental Budget", value: 14.91 },
+          { merchant: "Praxisdienst", value: 18.85 },
+        ]
+      },
+      {
+        name: "Matériau d\'enregistrement occlusal — Cartouche",
+        sub: "Silicone rigide, prise rapide",
+        tag: "Occlusion",
+        prices: [
+          { merchant: "Megadental", value: 23.69 },
+          { merchant: "La Boutique Du Dentiste", value: 21.38 },
+          { merchant: "Dentalclick", value: 21.94 },
+          { merchant: "Dentalprivé", value: 19.02 },
+          { merchant: "GACD", value: 21.25 },
+          { merchant: "Henry Schein", value: 21.93 },
+          { merchant: "Dental Budget", value: 19.08 },
+          { merchant: "Doctor AI", value: 21.48 },
+          { merchant: "Doctor Strong", value: 19.79 },
+          { merchant: "Praxisdienst", value: 24.0 },
+        ]
+      },
+      {
+        name: "Vernis à modèle — Flacon 250 ml",
+        sub: "Isolant, séchage rapide",
+        tag: "Laboratoire",
+        prices: [
+          { merchant: "Henry Schein", value: 17.43 },
+          { merchant: "La Boutique Du Dentiste", value: 16.77 },
+          { merchant: "Doctor AI", value: 18.57 },
+          { merchant: "Dental Budget", value: 18.88 },
+          { merchant: "Dentaltix", value: 16.91 },
+          { merchant: "Apol", value: 15.98 },
+          { merchant: "edenta.eu", value: 18.44 },
+          { merchant: "Dental Good Deal", value: 15.98 },
+          { merchant: "Discount Dentaire", value: 18.19 },
+        ]
+      },
+      {
+        name: "Résine autopolymérisable — Kit",
+        sub: "Poudre + liquide, teinte rose",
+        tag: "Laboratoire",
+        prices: [
+          { merchant: "Discount Dentaire", value: 33.87 },
+          { merchant: "Dentaireachat", value: 35.3 },
+          { merchant: "Dentaltix", value: 35.47 },
+          { merchant: "Apol", value: 38.74 },
+          { merchant: "Doctor AI", value: 30.95 },
+          { merchant: "Praxisdienst", value: 32.8 },
+          { merchant: "edenta.eu", value: 32.88 },
+          { merchant: "La Boutique Du Dentiste", value: 35.58 },
+        ]
+      },
+      {
+        name: "Isolant pour plâtre — Flacon 500 ml",
+        sub: "Alginate/silicone",
+        tag: "Laboratoire",
+        prices: [
+          { merchant: "Doctor AI", value: 15.04 },
+          { merchant: "Megadental", value: 13.65 },
+          { merchant: "Dentaireachat", value: 15.55 },
+          { merchant: "Dentaltix", value: 13.39 },
+          { merchant: "Doctor Strong", value: 13.87 },
+          { merchant: "B2B Dental", value: 12.93 },
+          { merchant: "Dental Budget", value: 13.83 },
+          { merchant: "Discount Dentaire", value: 15.4 },
+          { merchant: "Dentalprivé", value: 16.24 },
+          { merchant: "La Boutique Du Dentiste", value: 15.8 },
+          { merchant: "edenta.eu", value: 15.8 },
+          { merchant: "Praxisdienst", value: 16.27 },
+          { merchant: "Dental Good Deal", value: 14.63 },
+        ]
+      },
+      {
+        name: "Porte-empreintes jetables — Sachet de 50",
+        sub: "Plastique, dentés",
+        tag: "Porte-empreintes",
+        prices: [
+          { merchant: "Dental Budget", value: 19.39 },
+          { merchant: "Dental Good Deal", value: 17.33 },
+          { merchant: "La Boutique Du Dentiste", value: 20.87 },
+          { merchant: "Dentalprivé", value: 18.37 },
+          { merchant: "Dentaltix", value: 20.03 },
+          { merchant: "Megadental", value: 19.07 },
+          { merchant: "Dentalclick", value: 19.61 },
+          { merchant: "Praxisdienst", value: 20.68 },
+        ]
+      },
+      {
+        name: "Silicone de précision Heavy Body — Pot 900 ml",
+        sub: "Base, prise normale",
+        tag: "Silicones",
+        prices: [
+          { merchant: "B2B Dental", value: 37.97 },
+          { merchant: "edenta.eu", value: 36.33 },
+          { merchant: "Dentaireachat", value: 44.33 },
+          { merchant: "Megadental", value: 37.57 },
+          { merchant: "La Boutique Du Dentiste", value: 35.25 },
+          { merchant: "Dentaltix", value: 44.14 },
+          { merchant: "Doctor Strong", value: 42.64 },
+          { merchant: "Dentalclick", value: 40.02 },
+          { merchant: "Doctor AI", value: 41.7 },
+          { merchant: "Dental Budget", value: 41.33 },
+        ]
       }
     ]
   },
   "rotatifs": {
     title: "Instruments rotatifs",
-    sub: "Fraises, disques, brossettes — comparés sur tous les marchands qui les référencent",
+    sub: "Fraises, turbines, contre-angles — comparés sur tous les marchands qui les référencent",
     products: [
       {
         name: "Assortiment fraises diamantées turbine — Coffret 30 pièces",
@@ -501,7 +1010,7 @@ const CATEGORIES = {
           { merchant: "edenta.eu", value: 39.3 },
           { merchant: "Megadental", value: 42.21 },
           { merchant: "Praxisdienst", value: 38.97 },
-          { merchant: "Dental Budget", value: 43.0 },
+          { merchant: "DFC Instruments", value: 43.0 },
         ]
       },
       {
@@ -537,12 +1046,12 @@ const CATEGORIES = {
         sub: "Contre-angle, poils doux",
         tag: "Prophylaxie",
         prices: [
-          { merchant: "GACD", value: 16.9 },
-          { merchant: "Dentalprivé", value: 16.16 },
-          { merchant: "B2B Dental", value: 18.45 },
-          { merchant: "Praxisdienst", value: 17.25 },
-          { merchant: "edenta.eu", value: 17.14 },
-          { merchant: "Doctor AI", value: 17.87 },
+          { merchant: "DFC Instruments", value: 16.9 },
+          { merchant: "GACD", value: 16.16 },
+          { merchant: "Dentalprivé", value: 18.45 },
+          { merchant: "B2B Dental", value: 17.25 },
+          { merchant: "Praxisdienst", value: 17.14 },
+          { merchant: "edenta.eu", value: 17.87 },
         ]
       },
       {
@@ -557,6 +1066,247 @@ const CATEGORIES = {
           { merchant: "Doctor Strong", value: 22.55 },
           { merchant: "B2B Dental", value: 22.74 },
           { merchant: "Dentalclick", value: 19.74 },
+        ]
+      },
+      {
+        name: "Turbine dentaire haute vitesse — Unité",
+        sub: "Raccord rapide, spray interne",
+        tag: "Turbines",
+        prices: [
+          { merchant: "La Boutique Du Dentiste", value: 209.64 },
+          { merchant: "Dentalclick", value: 239.75 },
+          { merchant: "Praxisdienst", value: 198.37 },
+          { merchant: "GACD", value: 244.19 },
+          { merchant: "Dentaltix", value: 223.97 },
+          { merchant: "DFC Instruments", value: 238.25 },
+          { merchant: "Apol", value: 228.43 },
+          { merchant: "Dentaireachat", value: 238.5 },
+          { merchant: "Doctor AI", value: 227.18 },
+        ]
+      },
+      {
+        name: "Contre-angle bague bleue 1:1 — Unité",
+        sub: "Spray interne, avec lumière",
+        tag: "Contre-angles",
+        prices: [
+          { merchant: "Discount Dentaire", value: 306.91 },
+          { merchant: "Megadental", value: 293.73 },
+          { merchant: "Doctor AI", value: 253.26 },
+          { merchant: "Dentalclick", value: 303.87 },
+          { merchant: "Apol", value: 251.61 },
+          { merchant: "Doctor Strong", value: 255.39 },
+          { merchant: "edenta.eu", value: 261.34 },
+          { merchant: "Dentaltix", value: 306.89 },
+          { merchant: "Dentalprivé", value: 315.31 },
+          { merchant: "Henry Schein", value: 264.4 },
+          { merchant: "DFC Instruments", value: 318.33 },
+          { merchant: "Dental Budget", value: 311.08 },
+          { merchant: "B2B Dental", value: 254.14 },
+          { merchant: "Dental Good Deal", value: 308.5 },
+        ]
+      },
+      {
+        name: "Contre-angle bague rouge 5:1 — Unité",
+        sub: "Réducteur, spray interne",
+        tag: "Contre-angles",
+        prices: [
+          { merchant: "DFC Instruments", value: 283.29 },
+          { merchant: "Dental Budget", value: 262.39 },
+          { merchant: "Doctor AI", value: 317.28 },
+          { merchant: "Henry Schein", value: 304.58 },
+          { merchant: "Praxisdienst", value: 271.79 },
+          { merchant: "Megadental", value: 334.37 },
+          { merchant: "Apol", value: 325.04 },
+          { merchant: "Discount Dentaire", value: 316.45 },
+        ]
+      },
+      {
+        name: "Micromoteur électrique — Unité",
+        sub: "Sans balais, cordon inclus",
+        tag: "Micromoteurs",
+        prices: [
+          { merchant: "Apol", value: 519.54 },
+          { merchant: "Praxisdienst", value: 540.92 },
+          { merchant: "Doctor AI", value: 492.45 },
+          { merchant: "Discount Dentaire", value: 532.1 },
+          { merchant: "B2B Dental", value: 517.9 },
+          { merchant: "Doctor Strong", value: 425.8 },
+          { merchant: "Dentaireachat", value: 424.24 },
+          { merchant: "Megadental", value: 527.14 },
+          { merchant: "DFC Instruments", value: 490.18 },
+          { merchant: "Dental Budget", value: 447.17 },
+          { merchant: "Dentaltix", value: 514.12 },
+          { merchant: "Dentalclick", value: 469.98 },
+          { merchant: "La Boutique Du Dentiste", value: 531.72 },
+          { merchant: "GACD", value: 539.28 },
+        ]
+      },
+      {
+        name: "Pièce à main droite — Unité",
+        sub: "Pour fraises HP, autoclavable",
+        tag: "Pièces à main",
+        prices: [
+          { merchant: "DFC Instruments", value: 190.38 },
+          { merchant: "Praxisdienst", value: 197.06 },
+          { merchant: "Dental Budget", value: 188.17 },
+          { merchant: "Discount Dentaire", value: 165.45 },
+          { merchant: "Dentalclick", value: 202.39 },
+          { merchant: "Henry Schein", value: 203.08 },
+          { merchant: "Doctor Strong", value: 171.95 },
+        ]
+      },
+      {
+        name: "Disques de séparation — Boîte de 10",
+        sub: "Ø 22mm, double face",
+        tag: "Polissage",
+        prices: [
+          { merchant: "Dentaltix", value: 16.08 },
+          { merchant: "Discount Dentaire", value: 15.98 },
+          { merchant: "edenta.eu", value: 12.85 },
+          { merchant: "Megadental", value: 15.07 },
+          { merchant: "DFC Instruments", value: 15.93 },
+          { merchant: "Henry Schein", value: 15.0 },
+          { merchant: "GACD", value: 14.91 },
+          { merchant: "Dentalprivé", value: 13.25 },
+          { merchant: "Dental Good Deal", value: 12.47 },
+          { merchant: "B2B Dental", value: 15.59 },
+          { merchant: "Dentaireachat", value: 13.52 },
+          { merchant: "La Boutique Du Dentiste", value: 15.96 },
+          { merchant: "Apol", value: 14.03 },
+        ]
+      },
+      {
+        name: "Meulettes en silicone — Boîte de 12",
+        sub: "Polissage composite, assorties",
+        tag: "Polissage",
+        prices: [
+          { merchant: "Dental Budget", value: 19.03 },
+          { merchant: "Praxisdienst", value: 17.41 },
+          { merchant: "Dental Good Deal", value: 18.81 },
+          { merchant: "Dentalclick", value: 17.51 },
+          { merchant: "Doctor AI", value: 19.73 },
+          { merchant: "Apol", value: 20.82 },
+          { merchant: "Megadental", value: 19.16 },
+        ]
+      },
+      {
+        name: "Cupules à polir caoutchouc — Boîte de 100",
+        sub: "Contre-angle, jetables",
+        tag: "Polissage",
+        prices: [
+          { merchant: "Praxisdienst", value: 14.59 },
+          { merchant: "Discount Dentaire", value: 16.54 },
+          { merchant: "Dentalprivé", value: 16.23 },
+          { merchant: "GACD", value: 16.28 },
+          { merchant: "La Boutique Du Dentiste", value: 17.68 },
+          { merchant: "Megadental", value: 15.65 },
+        ]
+      },
+      {
+        name: "Fraises céramique/zircone — Boîte de 5",
+        sub: "Diamantées, grain fin",
+        tag: "Fraises diamantées",
+        prices: [
+          { merchant: "Henry Schein", value: 29.8 },
+          { merchant: "Apol", value: 28.47 },
+          { merchant: "Dentalclick", value: 28.2 },
+          { merchant: "DFC Instruments", value: 25.26 },
+          { merchant: "Praxisdienst", value: 26.11 },
+          { merchant: "La Boutique Du Dentiste", value: 28.45 },
+          { merchant: "GACD", value: 24.81 },
+          { merchant: "Dentaireachat", value: 30.17 },
+          { merchant: "Dentalprivé", value: 28.52 },
+        ]
+      },
+      {
+        name: "Détartreur ultrasonique — Pièce à main + cordon",
+        sub: "Compatible EMS/Satelec",
+        tag: "Détartreurs",
+        prices: [
+          { merchant: "Dentaltix", value: 353.9 },
+          { merchant: "Dentalclick", value: 386.38 },
+          { merchant: "Doctor AI", value: 321.07 },
+          { merchant: "DFC Instruments", value: 335.2 },
+          { merchant: "Discount Dentaire", value: 378.67 },
+          { merchant: "La Boutique Du Dentiste", value: 337.71 },
+          { merchant: "Dentaireachat", value: 350.64 },
+          { merchant: "Dentalprivé", value: 375.88 },
+          { merchant: "Apol", value: 349.84 },
+          { merchant: "Doctor Strong", value: 340.75 },
+          { merchant: "Megadental", value: 366.45 },
+          { merchant: "Henry Schein", value: 317.66 },
+          { merchant: "edenta.eu", value: 320.79 },
+          { merchant: "Dental Budget", value: 342.64 },
+        ]
+      },
+      {
+        name: "Curettes parodontales — Set de 4",
+        sub: "Universelles, inox",
+        tag: "Instruments à main",
+        prices: [
+          { merchant: "Discount Dentaire", value: 76.84 },
+          { merchant: "Dentaireachat", value: 83.7 },
+          { merchant: "Dental Good Deal", value: 74.41 },
+          { merchant: "edenta.eu", value: 72.23 },
+          { merchant: "DFC Instruments", value: 75.12 },
+          { merchant: "Dentalprivé", value: 72.62 },
+          { merchant: "GACD", value: 71.45 },
+          { merchant: "Doctor AI", value: 73.79 },
+          { merchant: "Dentaltix", value: 69.64 },
+        ]
+      },
+      {
+        name: "Sondes parodontales graduées — Unité",
+        sub: "Graduation OMS",
+        tag: "Instruments à main",
+        prices: [
+          { merchant: "La Boutique Du Dentiste", value: 19.3 },
+          { merchant: "edenta.eu", value: 16.66 },
+          { merchant: "Apol", value: 18.02 },
+          { merchant: "Doctor Strong", value: 16.92 },
+          { merchant: "Dentaireachat", value: 15.69 },
+          { merchant: "Praxisdienst", value: 15.71 },
+          { merchant: "Megadental", value: 16.56 },
+          { merchant: "Discount Dentaire", value: 15.88 },
+          { merchant: "Henry Schein", value: 16.44 },
+          { merchant: "B2B Dental", value: 16.66 },
+          { merchant: "GACD", value: 18.01 },
+          { merchant: "Dental Budget", value: 17.07 },
+        ]
+      },
+      {
+        name: "Fraises diamantées bague jaune (finition) — Boîte de 5",
+        sub: "Grain extra-fin",
+        tag: "Fraises diamantées",
+        prices: [
+          { merchant: "Apol", value: 21.52 },
+          { merchant: "Doctor AI", value: 20.79 },
+          { merchant: "Dentalprivé", value: 21.39 },
+          { merchant: "Praxisdienst", value: 20.47 },
+          { merchant: "Dentaireachat", value: 22.57 },
+          { merchant: "DFC Instruments", value: 22.41 },
+          { merchant: "edenta.eu", value: 21.25 },
+          { merchant: "Dental Budget", value: 19.38 },
+          { merchant: "B2B Dental", value: 18.39 },
+          { merchant: "Dental Good Deal", value: 19.57 },
+          { merchant: "Dentalclick", value: 21.75 },
+        ]
+      },
+      {
+        name: "Précelles dentaires — Unité",
+        sub: "Inox, courbes",
+        tag: "Instruments à main",
+        prices: [
+          { merchant: "Dentalprivé", value: 16.56 },
+          { merchant: "Doctor Strong", value: 19.9 },
+          { merchant: "Dental Budget", value: 18.28 },
+          { merchant: "Dentaltix", value: 17.52 },
+          { merchant: "edenta.eu", value: 20.79 },
+          { merchant: "DFC Instruments", value: 17.32 },
+          { merchant: "La Boutique Du Dentiste", value: 19.15 },
+          { merchant: "Praxisdienst", value: 17.75 },
+          { merchant: "Dentaireachat", value: 17.76 },
+          { merchant: "Dental Good Deal", value: 17.39 },
         ]
       }
     ]
@@ -593,10 +1343,10 @@ const CATEGORIES = {
           { merchant: "Dentaireachat", value: 60.86 },
           { merchant: "GACD", value: 58.22 },
           { merchant: "edenta.eu", value: 55.5 },
-          { merchant: "La Boutique Du Dentiste", value: 54.88 },
-          { merchant: "Megadental", value: 51.43 },
-          { merchant: "Apol", value: 52.06 },
-          { merchant: "Dental Good Deal", value: 60.58 },
+          { merchant: "DFC Instruments", value: 54.88 },
+          { merchant: "La Boutique Du Dentiste", value: 51.43 },
+          { merchant: "Megadental", value: 52.06 },
+          { merchant: "Apol", value: 60.58 },
         ]
       },
       {
@@ -604,12 +1354,12 @@ const CATEGORIES = {
         sub: "Assorties 15-40",
         tag: "Obturation",
         prices: [
-          { merchant: "Doctor Strong", value: 9.5 },
-          { merchant: "Discount Dentaire", value: 9.17 },
-          { merchant: "Dentaireachat", value: 9.79 },
-          { merchant: "La Boutique Du Dentiste", value: 8.91 },
-          { merchant: "edenta.eu", value: 9.27 },
-          { merchant: "Doctor AI", value: 9.01 },
+          { merchant: "Doctor Strong", value: 9.98 },
+          { merchant: "Discount Dentaire", value: 9.64 },
+          { merchant: "Dentaireachat", value: 10.28 },
+          { merchant: "La Boutique Du Dentiste", value: 9.36 },
+          { merchant: "edenta.eu", value: 9.74 },
+          { merchant: "Doctor AI", value: 9.47 },
         ]
       },
       {
@@ -617,16 +1367,16 @@ const CATEGORIES = {
         sub: "Base résine, prise chimique",
         tag: "Ciments",
         prices: [
-          { merchant: "Doctor Strong", value: 48.48 },
-          { merchant: "Dental Good Deal", value: 48.7 },
-          { merchant: "B2B Dental", value: 50.6 },
-          { merchant: "Dentaireachat", value: 46.03 },
-          { merchant: "edenta.eu", value: 46.3 },
-          { merchant: "Dentalclick", value: 49.81 },
-          { merchant: "Doctor AI", value: 55.31 },
-          { merchant: "Apol", value: 48.48 },
-          { merchant: "Dentalprivé", value: 51.49 },
-          { merchant: "Henry Schein", value: 55.32 },
+          { merchant: "Doctor Strong", value: 51.08 },
+          { merchant: "Dental Good Deal", value: 51.31 },
+          { merchant: "B2B Dental", value: 53.31 },
+          { merchant: "Dentaireachat", value: 48.5 },
+          { merchant: "edenta.eu", value: 48.78 },
+          { merchant: "Dentalclick", value: 52.48 },
+          { merchant: "Doctor AI", value: 58.28 },
+          { merchant: "Apol", value: 51.08 },
+          { merchant: "Dentalprivé", value: 54.25 },
+          { merchant: "Henry Schein", value: 58.29 },
         ]
       },
       {
@@ -634,12 +1384,197 @@ const CATEGORIES = {
         sub: "Épaisseur medium, non parfumées",
         tag: "Champ opératoire",
         prices: [
-          { merchant: "Doctor AI", value: 10.58 },
-          { merchant: "Dentalprivé", value: 10.12 },
-          { merchant: "Megadental", value: 10.0 },
-          { merchant: "Apol", value: 11.43 },
-          { merchant: "Dentaltix", value: 9.98 },
-          { merchant: "edenta.eu", value: 9.57 },
+          { merchant: "Doctor AI", value: 11.3 },
+          { merchant: "Dentalprivé", value: 10.81 },
+          { merchant: "Megadental", value: 10.68 },
+          { merchant: "Apol", value: 12.21 },
+          { merchant: "Dentaltix", value: 10.66 },
+          { merchant: "edenta.eu", value: 10.22 },
+        ]
+      },
+      {
+        name: "Limes rotatives Ni-Ti rotation continue — Boîte de 6",
+        sub: "Conicité variable",
+        tag: "Limes rotatives",
+        prices: [
+          { merchant: "Dental Budget", value: 59.73 },
+          { merchant: "Henry Schein", value: 74.17 },
+          { merchant: "Dentaireachat", value: 71.8 },
+          { merchant: "GACD", value: 59.04 },
+          { merchant: "DFC Instruments", value: 60.17 },
+          { merchant: "edenta.eu", value: 70.12 },
+          { merchant: "Doctor Strong", value: 74.88 },
+          { merchant: "Doctor AI", value: 70.29 },
+          { merchant: "Dental Good Deal", value: 62.05 },
+          { merchant: "Dentalclick", value: 64.97 },
+          { merchant: "Dentalprivé", value: 64.17 },
+        ]
+      },
+      {
+        name: "Localisateur d\'apex — Unité",
+        sub: "Écran couleur, sonde incluse",
+        tag: "Diagnostic",
+        prices: [
+          { merchant: "Dentaltix", value: 318.23 },
+          { merchant: "Dentalprivé", value: 319.26 },
+          { merchant: "Dental Budget", value: 295.8 },
+          { merchant: "Doctor Strong", value: 318.74 },
+          { merchant: "Henry Schein", value: 336.53 },
+          { merchant: "Dentaireachat", value: 306.72 },
+          { merchant: "Discount Dentaire", value: 329.63 },
+          { merchant: "edenta.eu", value: 335.99 },
+          { merchant: "Megadental", value: 330.97 },
+          { merchant: "La Boutique Du Dentiste", value: 305.75 },
+          { merchant: "Dental Good Deal", value: 288.88 },
+        ]
+      },
+      {
+        name: "Pointes de papier absorbantes — Boîte de 200",
+        sub: "Assorties, stériles",
+        tag: "Séchage",
+        prices: [
+          { merchant: "Doctor AI", value: 8.27 },
+          { merchant: "Dentalprivé", value: 7.09 },
+          { merchant: "Dentaireachat", value: 7.18 },
+          { merchant: "Apol", value: 7.48 },
+          { merchant: "La Boutique Du Dentiste", value: 8.21 },
+          { merchant: "GACD", value: 8.38 },
+        ]
+      },
+      {
+        name: "Ciment MTA — Kit",
+        sub: "Blanc, coiffage pulpaire",
+        tag: "Ciments",
+        prices: [
+          { merchant: "Discount Dentaire", value: 93.92 },
+          { merchant: "Doctor Strong", value: 83.11 },
+          { merchant: "Dentaltix", value: 94.25 },
+          { merchant: "Praxisdienst", value: 86.68 },
+          { merchant: "Doctor AI", value: 99.46 },
+          { merchant: "Dentaireachat", value: 93.84 },
+          { merchant: "DFC Instruments", value: 86.61 },
+        ]
+      },
+      {
+        name: "Réglettes endodontiques — Unité",
+        sub: "Graduées, réutilisables",
+        tag: "Accessoires",
+        prices: [
+          { merchant: "Dental Budget", value: 10.5 },
+          { merchant: "Doctor Strong", value: 10.5 },
+          { merchant: "Praxisdienst", value: 8.8 },
+          { merchant: "Apol", value: 10.96 },
+          { merchant: "Megadental", value: 10.05 },
+          { merchant: "edenta.eu", value: 10.84 },
+          { merchant: "Dentalprivé", value: 10.71 },
+          { merchant: "Doctor AI", value: 9.45 },
+          { merchant: "Dental Good Deal", value: 10.95 },
+          { merchant: "Dentalclick", value: 10.98 },
+          { merchant: "Dentaireachat", value: 8.8 },
+          { merchant: "Discount Dentaire", value: 10.93 },
+          { merchant: "B2B Dental", value: 8.66 },
+          { merchant: "La Boutique Du Dentiste", value: 9.64 },
+        ]
+      },
+      {
+        name: "Digue liquide (isolation gingivale) — Flacon",
+        sub: "Photopolymérisable",
+        tag: "Champ opératoire",
+        prices: [
+          { merchant: "edenta.eu", value: 24.34 },
+          { merchant: "Discount Dentaire", value: 28.38 },
+          { merchant: "Dental Budget", value: 24.01 },
+          { merchant: "B2B Dental", value: 24.72 },
+          { merchant: "DFC Instruments", value: 27.09 },
+          { merchant: "Doctor Strong", value: 22.92 },
+          { merchant: "La Boutique Du Dentiste", value: 23.4 },
+          { merchant: "Megadental", value: 27.58 },
+          { merchant: "Dentaltix", value: 22.93 },
+        ]
+      },
+      {
+        name: "Clamps pour digue — Set assorti",
+        sub: "10 tailles, inox",
+        tag: "Champ opératoire",
+        prices: [
+          { merchant: "Dentaireachat", value: 44.05 },
+          { merchant: "Dentalprivé", value: 41.77 },
+          { merchant: "Dentalclick", value: 37.4 },
+          { merchant: "Dental Budget", value: 43.53 },
+          { merchant: "DFC Instruments", value: 44.17 },
+          { merchant: "La Boutique Du Dentiste", value: 37.14 },
+          { merchant: "Apol", value: 44.2 },
+          { merchant: "Doctor Strong", value: 38.88 },
+          { merchant: "Doctor AI", value: 39.55 },
+          { merchant: "B2B Dental", value: 34.75 },
+          { merchant: "Praxisdienst", value: 41.91 },
+          { merchant: "Megadental", value: 35.43 },
+          { merchant: "edenta.eu", value: 38.59 },
+        ]
+      },
+      {
+        name: "Cadre de digue — Unité",
+        sub: "Plastique radio-opaque",
+        tag: "Champ opératoire",
+        prices: [
+          { merchant: "GACD", value: 11.72 },
+          { merchant: "Henry Schein", value: 12.04 },
+          { merchant: "Dentalclick", value: 12.4 },
+          { merchant: "Praxisdienst", value: 13.4 },
+          { merchant: "Dental Good Deal", value: 12.39 },
+          { merchant: "edenta.eu", value: 11.99 },
+          { merchant: "Dental Budget", value: 14.51 },
+        ]
+      },
+      {
+        name: "Sealer biocéramique — Seringue",
+        sub: "Prêt à l\'emploi",
+        tag: "Ciments",
+        prices: [
+          { merchant: "Dental Good Deal", value: 47.77 },
+          { merchant: "Apol", value: 52.34 },
+          { merchant: "GACD", value: 49.37 },
+          { merchant: "Henry Schein", value: 47.05 },
+          { merchant: "Praxisdienst", value: 44.29 },
+          { merchant: "Discount Dentaire", value: 50.06 },
+          { merchant: "Dentaireachat", value: 51.28 },
+          { merchant: "La Boutique Du Dentiste", value: 53.08 },
+          { merchant: "Doctor Strong", value: 45.87 },
+          { merchant: "Doctor AI", value: 50.34 },
+          { merchant: "Dentalclick", value: 48.9 },
+          { merchant: "Dentaltix", value: 48.07 },
+        ]
+      },
+      {
+        name: "Moteur d\'endodontie portable — Unité",
+        sub: "Avec localisateur d\'apex intégré",
+        tag: "Équipement",
+        prices: [
+          { merchant: "GACD", value: 398.34 },
+          { merchant: "Doctor Strong", value: 354.52 },
+          { merchant: "Apol", value: 415.04 },
+          { merchant: "Henry Schein", value: 438.87 },
+          { merchant: "Dentalclick", value: 439.08 },
+          { merchant: "Dentalprivé", value: 395.11 },
+        ]
+      },
+      {
+        name: "Limes pour rotation réciproque — Boîte de 6",
+        sub: "Système simplifié, mono-lime",
+        tag: "Limes rotatives",
+        prices: [
+          { merchant: "edenta.eu", value: 67.11 },
+          { merchant: "Praxisdienst", value: 65.75 },
+          { merchant: "Dental Good Deal", value: 78.14 },
+          { merchant: "GACD", value: 73.63 },
+          { merchant: "La Boutique Du Dentiste", value: 63.2 },
+          { merchant: "Megadental", value: 68.62 },
+          { merchant: "Henry Schein", value: 71.88 },
+          { merchant: "Dentaltix", value: 69.58 },
+          { merchant: "Doctor Strong", value: 80.9 },
+          { merchant: "Dentalclick", value: 77.1 },
+          { merchant: "Dentaireachat", value: 71.32 },
+          { merchant: "Dentalprivé", value: 67.84 },
         ]
       }
     ]
@@ -716,14 +1651,197 @@ const CATEGORIES = {
         sub: "Action rapide, pré-désinfection",
         tag: "Désinfection",
         prices: [
-          { merchant: "Dentaltix", value: 14.62 },
-          { merchant: "Dental Good Deal", value: 13.94 },
-          { merchant: "Discount Dentaire", value: 17.93 },
-          { merchant: "Doctor Strong", value: 14.3 },
-          { merchant: "Dentalprivé", value: 17.11 },
-          { merchant: "Megadental", value: 17.18 },
-          { merchant: "B2B Dental", value: 16.91 },
-          { merchant: "Doctor AI", value: 14.56 },
+          { merchant: "Dentaltix", value: 15.47 },
+          { merchant: "Dental Good Deal", value: 14.75 },
+          { merchant: "Discount Dentaire", value: 18.96 },
+          { merchant: "Doctor Strong", value: 15.12 },
+          { merchant: "Dentalprivé", value: 18.1 },
+          { merchant: "Megadental", value: 18.17 },
+          { merchant: "B2B Dental", value: 17.88 },
+          { merchant: "Doctor AI", value: 15.4 },
+        ]
+      },
+      {
+        name: "Gel hydroalcoolique — Flacon 500 ml",
+        sub: "Sans rinçage, parfum neutre",
+        tag: "Désinfection",
+        prices: [
+          { merchant: "Discount Dentaire", value: 7.75 },
+          { merchant: "B2B Dental", value: 7.27 },
+          { merchant: "Doctor Strong", value: 8.62 },
+          { merchant: "Dental Budget", value: 7.02 },
+          { merchant: "Dentaltix", value: 7.71 },
+          { merchant: "Praxisdienst", value: 8.29 },
+          { merchant: "Doctor AI", value: 7.58 },
+          { merchant: "GACD", value: 7.06 },
+          { merchant: "Megadental", value: 7.66 },
+          { merchant: "Dentalprivé", value: 8.33 },
+        ]
+      },
+      {
+        name: "Sur-blouses imperméables — Boîte de 25",
+        sub: "Manches longues, à usage unique",
+        tag: "Protection",
+        prices: [
+          { merchant: "Discount Dentaire", value: 37.23 },
+          { merchant: "GACD", value: 36.7 },
+          { merchant: "Dentalclick", value: 34.01 },
+          { merchant: "Doctor AI", value: 36.37 },
+          { merchant: "B2B Dental", value: 38.22 },
+          { merchant: "Dental Budget", value: 37.31 },
+          { merchant: "Doctor Strong", value: 40.62 },
+          { merchant: "Dentaltix", value: 41.07 },
+          { merchant: "Dentaireachat", value: 38.15 },
+          { merchant: "Dentalprivé", value: 35.56 },
+          { merchant: "Henry Schein", value: 32.62 },
+          { merchant: "Apol", value: 32.82 },
+          { merchant: "Megadental", value: 41.85 },
+          { merchant: "edenta.eu", value: 40.89 },
+        ]
+      },
+      {
+        name: "Lingettes désinfectantes surfaces — Boîte de 200",
+        sub: "Prêtes à l\'emploi",
+        tag: "Désinfection",
+        prices: [
+          { merchant: "Dentalprivé", value: 14.84 },
+          { merchant: "Dental Good Deal", value: 16.82 },
+          { merchant: "Doctor AI", value: 17.63 },
+          { merchant: "Henry Schein", value: 17.14 },
+          { merchant: "La Boutique Du Dentiste", value: 17.74 },
+          { merchant: "Dental Budget", value: 17.75 },
+          { merchant: "Dentalclick", value: 14.43 },
+          { merchant: "Megadental", value: 14.75 },
+          { merchant: "GACD", value: 17.22 },
+          { merchant: "B2B Dental", value: 16.86 },
+          { merchant: "Apol", value: 14.8 },
+        ]
+      },
+      {
+        name: "Bandelettes test autoclave — Boîte de 100",
+        sub: "Test de Bowie-Dick",
+        tag: "Contrôle",
+        prices: [
+          { merchant: "Praxisdienst", value: 29.71 },
+          { merchant: "Henry Schein", value: 28.31 },
+          { merchant: "Doctor Strong", value: 30.91 },
+          { merchant: "La Boutique Du Dentiste", value: 26.07 },
+          { merchant: "Dentalclick", value: 29.43 },
+          { merchant: "GACD", value: 29.13 },
+          { merchant: "Dentalprivé", value: 25.73 },
+          { merchant: "Dentaireachat", value: 25.91 },
+          { merchant: "Megadental", value: 28.6 },
+          { merchant: "Discount Dentaire", value: 30.36 },
+          { merchant: "Dental Good Deal", value: 29.52 },
+        ]
+      },
+      {
+        name: "Sachets papier crêpé stérilisation — Boîte de 200",
+        sub: "Format 60x60cm",
+        tag: "Stérilisation",
+        prices: [
+          { merchant: "Discount Dentaire", value: 19.53 },
+          { merchant: "Dental Budget", value: 22.6 },
+          { merchant: "edenta.eu", value: 19.71 },
+          { merchant: "Dental Good Deal", value: 22.58 },
+          { merchant: "Apol", value: 19.43 },
+          { merchant: "Praxisdienst", value: 21.47 },
+          { merchant: "Henry Schein", value: 21.57 },
+          { merchant: "Dentalprivé", value: 22.86 },
+        ]
+      },
+      {
+        name: "Container de transport instruments — Unité",
+        sub: "Perforé, autoclavable",
+        tag: "Stérilisation",
+        prices: [
+          { merchant: "Dentalclick", value: 35.32 },
+          { merchant: "Doctor AI", value: 30.78 },
+          { merchant: "Henry Schein", value: 32.95 },
+          { merchant: "Doctor Strong", value: 32.95 },
+          { merchant: "edenta.eu", value: 34.35 },
+          { merchant: "GACD", value: 33.2 },
+          { merchant: "B2B Dental", value: 37.33 },
+          { merchant: "Dentaireachat", value: 36.95 },
+          { merchant: "Dentaltix", value: 36.77 },
+          { merchant: "Apol", value: 34.61 },
+          { merchant: "Discount Dentaire", value: 29.56 },
+          { merchant: "Dental Budget", value: 35.9 },
+          { merchant: "Megadental", value: 37.11 },
+        ]
+      },
+      {
+        name: "Filtres pour autoclave — Boîte de 10",
+        sub: "Compatible classe B",
+        tag: "Stérilisation",
+        prices: [
+          { merchant: "Praxisdienst", value: 20.1 },
+          { merchant: "Megadental", value: 19.64 },
+          { merchant: "GACD", value: 21.01 },
+          { merchant: "Dental Good Deal", value: 17.34 },
+          { merchant: "La Boutique Du Dentiste", value: 20.3 },
+          { merchant: "Doctor Strong", value: 17.93 },
+          { merchant: "B2B Dental", value: 18.46 },
+          { merchant: "Dentalprivé", value: 16.55 },
+          { merchant: "edenta.eu", value: 18.87 },
+          { merchant: "Dentaltix", value: 18.83 },
+        ]
+      },
+      {
+        name: "Détergent enzymatique instruments — Bidon 5 L",
+        sub: "Pré-désinfection, triple enzymatique",
+        tag: "Désinfection",
+        prices: [
+          { merchant: "Dentaireachat", value: 38.92 },
+          { merchant: "Apol", value: 35.86 },
+          { merchant: "Discount Dentaire", value: 34.99 },
+          { merchant: "Praxisdienst", value: 32.75 },
+          { merchant: "La Boutique Du Dentiste", value: 34.5 },
+          { merchant: "Dental Good Deal", value: 34.43 },
+          { merchant: "edenta.eu", value: 39.3 },
+          { merchant: "Megadental", value: 36.13 },
+          { merchant: "GACD", value: 34.08 },
+          { merchant: "Doctor Strong", value: 40.04 },
+        ]
+      },
+      {
+        name: "Brosse de nettoyage instruments — Unité",
+        sub: "Manche long, poils nylon",
+        tag: "Accessoires",
+        prices: [
+          { merchant: "Megadental", value: 4.96 },
+          { merchant: "Apol", value: 4.64 },
+          { merchant: "Dentalprivé", value: 4.53 },
+          { merchant: "Dentaltix", value: 4.57 },
+          { merchant: "Discount Dentaire", value: 5.31 },
+          { merchant: "La Boutique Du Dentiste", value: 4.56 },
+          { merchant: "edenta.eu", value: 5.44 },
+          { merchant: "Dentalclick", value: 5.0 },
+          { merchant: "Doctor AI", value: 4.99 },
+          { merchant: "GACD", value: 4.92 },
+          { merchant: "Doctor Strong", value: 4.98 },
+          { merchant: "B2B Dental", value: 5.13 },
+          { merchant: "Dental Good Deal", value: 4.22 },
+          { merchant: "Dental Budget", value: 4.86 },
+        ]
+      },
+      {
+        name: "Housses de protection écrans — Boîte de 250",
+        sub: "Adhésives, transparentes",
+        tag: "Protection unit",
+        prices: [
+          { merchant: "B2B Dental", value: 11.72 },
+          { merchant: "Apol", value: 12.03 },
+          { merchant: "Dentaltix", value: 10.55 },
+          { merchant: "Doctor AI", value: 10.84 },
+          { merchant: "Discount Dentaire", value: 12.73 },
+          { merchant: "Dentalprivé", value: 11.94 },
+          { merchant: "Praxisdienst", value: 12.05 },
+          { merchant: "Henry Schein", value: 11.94 },
+          { merchant: "Dentalclick", value: 11.31 },
+          { merchant: "edenta.eu", value: 12.17 },
+          { merchant: "Doctor Strong", value: 12.28 },
+          { merchant: "Dental Budget", value: 11.57 },
         ]
       }
     ]
