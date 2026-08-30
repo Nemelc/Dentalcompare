@@ -281,6 +281,18 @@
     padding:18px;
     min-width:260px;
   }
+  .hero-readout .readout-photo{
+    width:100%;
+    height:74px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    margin-bottom:12px;
+  }
   .hero-readout .rlabel{
     font-family:'IBM Plex Mono', monospace;
     font-size:9.5px;
@@ -312,19 +324,17 @@
   .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
   .section-head h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; margin:0; }
   .section-head a{ font-size:12.5px; color:var(--teal); text-decoration:none; font-weight:600; }
-  .deal-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
-  .deal-card{
+  .deal-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+  .card{
     background:var(--card);
     border:1px solid var(--line);
     border-radius:var(--radius);
-    padding:16px;
-    text-decoration:none;
-    color:var(--ink);
+    padding:22px;
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:16px;
   }
-  .deal-card .deal-photo{
+  .prod-photo{
     width:100%;
     height:100px;
     background:var(--bg);
@@ -333,14 +343,86 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    color:var(--steel);
     font-size:32px;
+    margin-bottom:4px;
   }
-  .deal-card:hover{ border-color:var(--teal); }
-  .deal-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.03em; }
-  .deal-card .dname{ font-family:'Space Grotesk', sans-serif; font-size:13.5px; font-weight:600; line-height:1.3; min-height:34px; }
-  .deal-card .price-line{ display:flex; align-items:baseline; gap:8px; margin-top:2px; }
-  .deal-card .from-price{ font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:700; color:var(--teal); }
-  .deal-card .pct{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--mauve); background:var(--mauve-soft); padding:2px 6px; border-radius:10px; }
+  .card-top{ display:flex; flex-direction:column; gap:2px; }
+  .price-hero{
+    text-align:center;
+    padding:14px 0 12px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .price-hero .from{
+    font-size:10px; color:var(--ink-soft); text-transform:uppercase;
+    letter-spacing:0.05em; font-family:'IBM Plex Mono', monospace;
+  }
+  .price-hero .amount{
+    font-family:'Space Grotesk', sans-serif; font-size:32px; font-weight:700;
+    color:var(--teal); line-height:1.15;
+  }
+  .price-hero .pct-pill{
+    display:block; max-width:200px; margin:6px auto 0 auto;
+    background:var(--mauve-soft); color:var(--mauve);
+    font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600;
+    padding:5px 10px; border-radius:12px; line-height:1.4; white-space:normal;
+  }
+  .tag{
+    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+    letter-spacing:0.04em; text-transform:uppercase; background:var(--teal-soft);
+    color:var(--teal); padding:3px 8px; border-radius:4px; margin-bottom:8px;
+  }
+  .prod-name{
+    font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600;
+    line-height:1.25; margin:0;
+  }
+  .prod-sub{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .desc-link{
+    display:inline-block; margin-top:8px; font-size:12px; color:var(--teal);
+    text-decoration:none; font-weight:600;
+  }
+  .desc-link:hover{ text-decoration:underline; }
+
+  .rank-label{
+    font-size:9.5px; color:var(--ink-soft); text-transform:uppercase;
+    letter-spacing:0.05em; font-family:'IBM Plex Mono', monospace; margin-bottom:8px;
+  }
+  .rank-list{ display:flex; flex-direction:column; gap:8px; }
+  .rank-row{ display:grid; grid-template-columns:16px 66px 1fr 80px; align-items:center; gap:6px; }
+  .rank-row .num{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--steel); }
+  .rank-row.best .num{ color:var(--teal); font-weight:700; }
+  .rank-row .merch{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rank-row.best .merch{ color:var(--ink); font-weight:600; }
+  .rank-bar-track{ position:relative; height:8px; background:var(--bg); border-radius:4px; overflow:hidden; }
+  .rank-bar-fill{ height:100%; background:var(--steel); border-radius:4px; }
+  .rank-row.best .rank-bar-fill{ background:var(--teal); }
+  .rank-row .price{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; text-align:right; color:var(--ink);
+    display:flex; align-items:baseline; justify-content:flex-end; gap:5px;
+  }
+  .rank-row .vs-median{ font-size:9.5px; color:var(--mauve); font-weight:600; }
+  .rank-row.best .vs-median{ color:var(--teal); }
+  .rank-row.best .price{ color:var(--teal); font-weight:700; }
+
+  .cta-row{ display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); padding-top:14px; }
+  .cta-btn{
+    flex:1; background:var(--teal); color:#fff; border:none; padding:11px 14px;
+    border-radius:7px; font-family:'IBM Plex Sans', sans-serif; font-weight:600;
+    font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .cta-btn:hover{ background:#D4530A; }
+  .cta-note{ font-size:10px; color:var(--ink-soft); max-width:100px; line-height:1.3; }
+  .add-cart-btn{
+    width:100%; margin-top:8px; background:none; border:1px solid var(--teal); color:var(--teal);
+    padding:9px 14px; border-radius:7px; font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .add-cart-btn:hover{ background:var(--teal-soft); }
+  .add-cart-btn.added{ background:var(--teal); color:#fff; }
+
+  @media (max-width:1100px){ .deal-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:600px){ .deal-grid{ grid-template-columns:1fr; } }
 
   .push-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
   .push-tile{
@@ -447,6 +529,7 @@
         <a class="btn-primary" href="dental-comparator.html?cat=usage-unique">Voir le comparatif →</a>
       </div>
       <div class="hero-readout">
+        <div class="readout-photo">🧤</div>
         <div class="rlabel">Exemple — Gants nitrile (boîte de 200)</div>
         <div class="rname">5 marchands comparés</div>
         <div class="rrow best">
@@ -495,38 +578,125 @@ const CATEGORY_ICONS = {
   "hygiene": "🧴"
 };
 
-const deals = [
-  { name: "Gants nitrile non poudrés — Boîte 200", tag: "Usage unique", price: 14.20, pct: 16, cat: "usage-unique" },
-  { name: "Compresses stériles — Sachet 100", tag: "Usage unique", price: 6.35, pct: 9, cat: "usage-unique" },
-  { name: "Spray de refroidissement 200 ml", tag: "Anesthésie", price: 8.20, pct: 13, cat: "anesthesie" },
-  { name: "Alginate fraguado rapide 450 g", tag: "Empreintes", price: 4.60, pct: 13, cat: "empreintes" },
-  { name: "Gel anesthésique de surface 30 g", tag: "Anesthésie", price: 10.60, pct: 11, cat: "anesthesie" },
-  { name: "Porte-empreintes perforés (set)", tag: "Empreintes", price: 5.20, pct: 12, cat: "empreintes" },
-  { name: "Masques chirurgicaux 3 plis — Boîte 50", tag: "Usage unique", price: 4.10, pct: 14, cat: "usage-unique" },
-  { name: "Rouleaux salivaires — Sachet 2000", tag: "Usage unique", price: 9.75, pct: 8, cat: "usage-unique" },
-  { name: "Aiguilles d'anesthésie — Boîte 100", tag: "Anesthésie", price: 11.95, pct: 10, cat: "anesthesie" },
-  { name: "Carpules anesthésiques — Boîte 50", tag: "Anesthésie", price: 32.50, pct: 12, cat: "anesthesie" },
-  { name: "Silicone Putty Soft — 2x300 ml", tag: "Empreintes", price: 24.90, pct: 9, cat: "empreintes" },
-  { name: "Plâtre dentaire type IV — 5 kg", tag: "Empreintes", price: 39.90, pct: 7, cat: "empreintes" },
-  { name: "Fraises carbure boule — Boîte 10", tag: "Instruments rotatifs", price: 13.90, pct: 15, cat: "rotatifs" },
-  { name: "Disques à polir composite — Kit", tag: "Instruments rotatifs", price: 20.90, pct: 11, cat: "rotatifs" },
-  { name: "Limes K-file manuelles — Boîte 6", tag: "Endodontie", price: 6.40, pct: 13, cat: "endodontie" },
-  { name: "Pointes de gutta percha — Boîte 120", tag: "Endodontie", price: 8.30, pct: 9, cat: "endodontie" },
-  { name: "Sachets de stérilisation — Boîte 200", tag: "Hygiène", price: 15.90, pct: 12, cat: "hygiene" },
-  { name: "Gel hydroalcoolique — Flacon 500 ml", tag: "Hygiène", price: 6.90, pct: 10, cat: "hygiene" }
+// 8 produits vedettes, avec leurs vrais marchands comparés — même format que les pages catégories
+const featuredProducts = [
+  { name: "Gants nitrile non poudrés — Boîte de 200", sub: "Coloris bleu · Taille M", tag: "Gants", cat: "usage-unique", prices: [
+    { merchant: "Dental Good Deal", value: 14.20 }, { merchant: "Discount Dentaire", value: 15.10 },
+    { merchant: "Dentalprivé", value: 15.85 }, { merchant: "La Boutique Du Dentiste", value: 16.40 },
+    { merchant: "Doctor Strong", value: 16.90 }
+  ]},
+  { name: "Aiguilles d'anesthésie — Boîte de 100", sub: "30G courte", tag: "Aiguilles", cat: "anesthesie", prices: [
+    { merchant: "Dentaltix", value: 11.95 }, { merchant: "GACD", value: 12.60 },
+    { merchant: "B2B Dental", value: 13.10 }, { merchant: "Dental Budget", value: 13.55 }
+  ]},
+  { name: "Alginate de fraguado rapide — Sachet 450 g", sub: "Sans latex, chromatique", tag: "Alginates", cat: "empreintes", prices: [
+    { merchant: "GACD", value: 4.60 }, { merchant: "Megadental", value: 4.95 },
+    { merchant: "Dentalclick", value: 5.20 }, { merchant: "Dentaltix", value: 5.45 }
+  ]},
+  { name: "Fraises carbure de tungstène boule — Boîte de 10", sub: "Pour turbine, taille 1-6", tag: "Fraises carbure", cat: "rotatifs", prices: [
+    { merchant: "Dentaireachat", value: 13.90 }, { merchant: "Doctor Strong", value: 14.60 },
+    { merchant: "B2B Dental", value: 15.10 }, { merchant: "Megadental", value: 15.70 }, { merchant: "DFC Instruments", value: 16.20 }
+  ]},
+  { name: "Limes K-file manuelles — Boîte de 6", sub: "Assorties, 21 mm", tag: "Limes manuelles", cat: "endodontie", prices: [
+    { merchant: "Apol", value: 6.40 }, { merchant: "Henry Schein", value: 6.90 },
+    { merchant: "Dentalprivé", value: 7.20 }, { merchant: "GACD", value: 7.55 }
+  ]},
+  { name: "Sachets de stérilisation auto-scellants — Boîte de 200", sub: "90 x 260 mm", tag: "Stérilisation", cat: "hygiene", prices: [
+    { merchant: "Discount Dentaire", value: 15.90 }, { merchant: "La Boutique Du Dentiste", value: 16.70 },
+    { merchant: "Doctor Strong", value: 17.30 }, { merchant: "Dental Good Deal", value: 17.90 }
+  ]},
+  { name: "Masques chirurgicaux 3 plis — Boîte de 50", sub: "Type IIR", tag: "Masques", cat: "usage-unique", prices: [
+    { merchant: "Dental Good Deal", value: 4.10 }, { merchant: "Dentalprivé", value: 4.45 },
+    { merchant: "Discount Dentaire", value: 4.70 }, { merchant: "La Boutique Du Dentiste", value: 4.95 }
+  ]},
+  { name: "Carpules anesthésiques — Boîte de 50", sub: "Articaïne 4% + adrénaline 1/100 000", tag: "Carpules", cat: "anesthesie", prices: [
+    { merchant: "GACD", value: 32.50 }, { merchant: "Dentaltix", value: 34.20 },
+    { merchant: "B2B Dental", value: 35.60 }, { merchant: "Apol", value: 36.90 }
+  ]}
 ];
 
-document.getElementById('deal-grid').innerHTML = deals.map(d => `
-  <a class="deal-card" href="dental-comparator.html?cat=${d.cat}">
-    <div class="deal-photo">${CATEGORY_ICONS[d.cat] || '🦷'}</div>
-    <span class="tag">${d.tag}</span>
-    <span class="dname">${d.name}</span>
-    <div class="price-line">
-      <span class="from-price">${d.price.toFixed(2)} €</span>
-      <span class="pct">-${d.pct}%</span>
+function slugify(str){
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function renderFeaturedCard(p){
+  const sorted = [...p.prices].sort((a,b)=>a.value-b.value);
+  const min = sorted[0].value;
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 === 0
+    ? (sorted[mid - 1].value + sorted[mid].value) / 2
+    : sorted[mid].value;
+  const bestSavingsPct = Math.round(((median - min) / median) * 100);
+  const top3 = sorted.slice(0, 3);
+  const productId = slugify(p.name);
+
+  const rows = top3.map((pr, i) => {
+    const isBest = i === 0;
+    const barPct = (pr.value / median) * 100;
+    const vsMedianPct = Math.round(((median - pr.value) / median) * 100);
+    return `
+      <div class="rank-row ${isBest ? 'best' : ''}">
+        <span class="num">${i+1}</span>
+        <span class="merch">${pr.merchant}</span>
+        <span class="rank-bar-track"><span class="rank-bar-fill" style="width:${Math.min(barPct,100)}%;"></span></span>
+        <span class="price">${pr.value.toFixed(2)} €<span class="vs-median">${vsMedianPct > 0 ? '-'+vsMedianPct+'%' : '='}</span></span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="card-top">
+        <div class="prod-photo">${CATEGORY_ICONS[p.cat] || '🦷'}</div>
+        <span class="tag">${p.tag}</span>
+        <p class="prod-name">${p.name}</p>
+        <div class="prod-sub">${p.sub}</div>
+        <a class="desc-link" href="produit.html?id=${productId}">Description du produit →</a>
+      </div>
+
+      <div class="price-hero">
+        <div class="from">À partir de</div>
+        <div class="amount">${min.toFixed(2)} €</div>
+        <span class="pct-pill">-${bestSavingsPct}% par rapport au prix médian du marché</span>
+      </div>
+
+      <div>
+        <div class="rank-label">Top 3 des prix les plus bas — sur ${p.prices.length} marchands comparés</div>
+        <div class="rank-list">${rows}</div>
+      </div>
+
+      <div class="cta-row">
+        <button class="cta-btn" onclick="reveal(this)">Voir l'offre &nbsp;→</button>
+        <div class="cta-note">Redirige vers le marchand le moins cher</div>
+      </div>
+      <button class="add-cart-btn" onclick='addProductToCart(this)' data-product='${JSON.stringify({id: productId, name: p.name, tag: p.tag, sub: p.sub, prices: p.prices}).replace(/'/g, "&#39;")}'>
+        + Ajouter au panier
+      </button>
     </div>
-  </a>
-`).join('');
+  `;
+}
+
+function reveal(btn){
+  btn.textContent = "Redirection vers le marchand…";
+  btn.style.background = "#57655F";
+}
+
+function addProductToCart(btn){
+  const product = JSON.parse(btn.dataset.product);
+  addToCart(product);
+  const original = btn.textContent;
+  btn.textContent = "✓ Ajouté au panier";
+  btn.classList.add('added');
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.classList.remove('added');
+  }, 1400);
+}
+
+document.getElementById('deal-grid').innerHTML = featuredProducts.map(renderFeaturedCard).join('');
 </script>
 
 </body>
