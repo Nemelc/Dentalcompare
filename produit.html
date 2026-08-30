@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fiche produit — DentaCompare</title>
+<title>Fiche produit — DentalCompare</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -64,7 +64,7 @@
     border-radius:10px;
   }
 
-  .layout{ display:flex; align-items:flex-start; max-width:1400px; margin:0 auto; }
+  .layout{ display:flex; align-items:flex-start; width:100%; }
   .sidebar{ background:var(--card); border-right:1px solid var(--line); padding:20px 12px; width:220px; flex-shrink:0; }
   .sidebar-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:0 12px 10px 12px; }
   .sidebar a{ display:block; padding:11px 12px; font-family:'IBM Plex Sans', sans-serif; font-size:14px; color:var(--ink-soft); text-decoration:none; border-radius:6px; border-left:3px solid transparent; margin-bottom:2px; }
@@ -185,7 +185,7 @@
         <path d="M12 3c-2.2 0-3.5 1.1-4.8 1.1C5.9 4.1 4 3.3 4 6.2c0 2.6.9 4.3 1.3 7.1.3 2.3.6 6.2 2.2 6.2 1.7 0 1.5-4.3 2.6-4.3s.9 4.3 2.6 4.3c1.6 0 1.9-3.9 2.2-6.2.4-2.8 1.3-4.5 1.3-7.1 0-2.9-1.9-2.1-3.2-1.1C15.5 4.1 14.2 3 12 3z"/>
       </svg>
     </span>
-    <div>DentaCompare</div>
+    <div>DentalCompare</div>
   </a>
   <span class="tagline">Le prix le plus bas du marché, sur chaque référence</span>
   <div class="top-note">Fiche produit</div>
@@ -1903,7 +1903,7 @@ function renderProduct(){
 
   const { product: p, catKey, catTitle } = result;
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.cat === catKey));
-  document.title = p.name + " — DentaCompare";
+  document.title = p.name + " — DentalCompare";
 
   const sorted = [...p.prices].sort((a,b)=>a.value-b.value);
   const min = sorted[0].value;

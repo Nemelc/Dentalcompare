@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DentaCompare — Le comparateur de matériel dentaire pour cabinets</title>
+<title>DentalCompare — Le comparateur de matériel dentaire pour cabinets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -158,8 +158,7 @@
   .layout{
     display:flex;
     align-items:flex-start;
-    max-width:1400px;
-    margin:0 auto;
+    width:100%;
   }
   .sidebar{
     background:var(--card);
@@ -307,6 +306,9 @@
   .rrow.best .p{ color:#F4600C; font-weight:700; }
 
   .section{ margin-bottom:40px; }
+  .full-width-section{
+    padding:0 32px 40px 32px;
+  }
   .section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
   .section-head h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; margin:0; }
   .section-head a{ font-size:12.5px; color:var(--teal); text-decoration:none; font-weight:600; }
@@ -321,6 +323,17 @@
     display:flex;
     flex-direction:column;
     gap:8px;
+  }
+  .deal-card .deal-photo{
+    width:100%;
+    height:100px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
   }
   .deal-card:hover{ border-color:var(--teal); }
   .deal-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.03em; }
@@ -384,7 +397,7 @@
     .push-grid{ grid-template-columns:1fr 1fr; }
   }
   @media (max-width:480px){
-    header.top, main{ padding-left:16px; padding-right:16px; }
+    header.top, main, .full-width-section{ padding-left:16px; padding-right:16px; }
     .push-grid{ grid-template-columns:1fr; }
   }
 </style>
@@ -399,7 +412,7 @@
       </svg>
     </span>
     <div>
-      DentaCompare
+      DentalCompare
     </div>
   </a>
   <span class="tagline">Le prix le plus bas du marché, sur chaque référence</span>
@@ -454,16 +467,16 @@
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <h2>Meilleures affaires du moment</h2>
-        <a href="dental-comparator.html?cat=usage-unique">Tout voir →</a>
-      </div>
-      <div class="deal-grid" id="deal-grid"></div>
-    </section>
-
   </main>
 </div>
+
+<section class="section full-width-section">
+  <div class="section-head">
+    <h2>Meilleures affaires du moment</h2>
+    <a href="dental-comparator.html?cat=usage-unique">Tout voir →</a>
+  </div>
+  <div class="deal-grid" id="deal-grid"></div>
+</section>
 
 <footer>
   &nbsp;·&nbsp; <a href="mentions-legales.html" style="color:inherit;">Mentions légales</a>
@@ -472,6 +485,16 @@
 
 <script src="cart.js"></script>
 <script>
+// Icône générique par catégorie — remplacée par la vraie photo produit une fois les flux fournisseurs branchés
+const CATEGORY_ICONS = {
+  "usage-unique": "🧤",
+  "anesthesie": "💉",
+  "empreintes": "🦷",
+  "rotatifs": "⚙️",
+  "endodontie": "🩹",
+  "hygiene": "🧴"
+};
+
 const deals = [
   { name: "Gants nitrile non poudrés — Boîte 200", tag: "Usage unique", price: 14.20, pct: 16, cat: "usage-unique" },
   { name: "Compresses stériles — Sachet 100", tag: "Usage unique", price: 6.35, pct: 9, cat: "usage-unique" },
@@ -495,6 +518,7 @@ const deals = [
 
 document.getElementById('deal-grid').innerHTML = deals.map(d => `
   <a class="deal-card" href="dental-comparator.html?cat=${d.cat}">
+    <div class="deal-photo">${CATEGORY_ICONS[d.cat] || '🦷'}</div>
     <span class="tag">${d.tag}</span>
     <span class="dname">${d.name}</span>
     <div class="price-line">
