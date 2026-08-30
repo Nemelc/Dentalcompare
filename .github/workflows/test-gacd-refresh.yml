@@ -1,0 +1,38 @@
+name: Test GACD public refresh
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dependances du test
+        working-directory: backend
+        run: pip install -r requirements_daily_refresh.txt
+
+      - name: Tester le rafraichissement GACD public
+        working-directory: backend
+        run: |
+          python daily_gacd_refresh.py
+          python daily_export.py
+
+      - name: Enregistrer les donnees si elles changent
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add backend/data/daily_catalog.sqlite3 backend/data/gacd_current.json
+          git diff --cached --quiet || git commit -m "Test GACD public refresh"
+          git push
