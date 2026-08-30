@@ -1,4 +1,4 @@
-import gzip
+
 import io
 import json
 import re
@@ -39,11 +39,10 @@ class GACDScraper(BaseScraper):
     CLUSTER_URL = INDEX_BASE + "cluster.idx"
     DATA_BASE = "https://data.commoncrawl.org/"
 
-    # On cherche l'apex et www séparément.
-    TARGET_PREFIXES = (
-        "fr,gacd)/",
-        "fr,gacd,www)/",
-    )
+    # Plage SURT couvrant tout le domaine gacd.fr :
+    # apex + www + éventuels autres sous-domaines.
+    DOMAIN_LO = "fr,gacd)"
+    DOMAIN_HI = "fr,gacd-"
 
     # Nombre maximal d'URL candidates avant filtrage.
     MAX_URLS = 200
@@ -400,140 +399,164 @@ class GACDScraper(BaseScraper):
         self._records = {}
 
         print(
-            "GACD : recherche ciblée dans cluster.idx "
+            "GACD : chargement de cluster.idx "
             f"({self.CRAWL})..."
         )
 
-        seen_blocks = set()
+        # Pour ce crawl, cluster.idx fait environ 101 Mo.
+        # Le télécharger en entier rend la sélection du domaine
+        # beaucoup plus fiable qu'une recherche binaire HTTP distante.
+        response = self.session.get(
+            self.CLUSTER_URL,
+            timeout=120,
+        )
+        response.raise_for_status()
 
-        for prefix in self.TARGET_PREFIXES:
-            print(
-                f"  Recherche du préfixe {prefix}"
+        text = response.text
+
+        rows = []
+
+        for line in text.splitlines():
+            row = self._parse_cluster_line(line)
+            if row:
+                rows.append(row)
+
+        if not rows:
+            raise RuntimeError(
+                "cluster.idx a été téléchargé mais aucune ligne "
+                "valide n'a été lue."
             )
 
-            rows = self._cluster_rows_for_prefix(
-                prefix
-            )
+        print(
+            f"cluster.idx : {len(rows)} blocs indexés."
+        )
+        print(
+            "GACD : recherche de la plage SURT "
+            f"[{self.DOMAIN_LO}, {self.DOMAIN_HI})..."
+        )
 
-            print(
-                f"  {len(rows)} blocs CDX candidats"
-            )
+        # cluster.idx contient la première clé de chaque bloc.
+        # On prend le bloc juste avant DOMAIN_LO puis on avance
+        # jusqu'à ce que le début du bloc dépasse DOMAIN_HI.
+        candidate_rows = []
 
-            for row in rows:
-                block_key = (
-                    row["cdx_file"],
-                    row["offset"],
-                    row["length"],
+        first_idx = 0
+
+        for i, row in enumerate(rows):
+            if row["surt"] >= self.DOMAIN_LO:
+                first_idx = max(0, i - 1)
+                break
+        else:
+            first_idx = max(0, len(rows) - 1)
+
+        for row in rows[first_idx:]:
+            # Une fois au-delà de la borne haute, les blocs suivants
+            # ne peuvent plus contenir gacd.fr.
+            if (
+                candidate_rows
+                and row["surt"] >= self.DOMAIN_HI
+            ):
+                break
+
+            candidate_rows.append(row)
+
+            # Garde-fou : un domaine comme GACD ne devrait pas
+            # nécessiter des centaines de blocs pour le test.
+            if len(candidate_rows) >= 40:
+                break
+
+        print(
+            f"GACD : {len(candidate_rows)} blocs CDX à examiner."
+        )
+
+        for row in candidate_rows:
+            try:
+                cdx_text = self._fetch_cdx_block(row)
+            except Exception as exc:
+                print(
+                    f"  Bloc ignoré : {exc}"
                 )
+                continue
 
-                if block_key in seen_blocks:
+            for line in cdx_text.splitlines():
+                item = self._parse_cdx_line(line)
+
+                if not item:
                     continue
 
-                seen_blocks.add(block_key)
+                urlkey = item["urlkey"]
 
-                try:
-                    text = self._fetch_cdx_block(
-                        row
-                    )
-                except Exception as exc:
-                    print(
-                        f"  Bloc ignoré : {exc}"
-                    )
+                # Tout gacd.fr, y compris www et sous-domaines,
+                # doit être dans cette plage SURT.
+                if not (
+                    self.DOMAIN_LO
+                    <= urlkey
+                    < self.DOMAIN_HI
+                ):
                     continue
 
-                for line in text.splitlines():
-                    item = self._parse_cdx_line(
-                        line
+                if str(
+                    item.get("status", "")
+                ) != "200":
+                    continue
+
+                url = item.get("url")
+
+                if not self._looks_like_product_url(
+                    url
+                ):
+                    continue
+
+                filename = item.get("filename")
+                offset = item.get("offset")
+                length = item.get("length")
+
+                if (
+                    not filename
+                    or offset is None
+                    or length is None
+                ):
+                    continue
+
+                candidate = {
+                    "url": url,
+                    "filename": filename,
+                    "offset": int(offset),
+                    "length": int(length),
+                    "timestamp": item.get("timestamp"),
+                    "_collection": self.CRAWL,
+                }
+
+                current = self._records.get(url)
+
+                if (
+                    current is None
+                    or str(
+                        candidate.get("timestamp", "")
                     )
+                    > str(
+                        current.get("timestamp", "")
+                    )
+                ):
+                    self._records[url] = candidate
 
-                    if not item:
-                        continue
-
-                    if not self._is_gacd_urlkey(
-                        item["urlkey"]
-                    ):
-                        continue
-
-                    if str(
-                        item.get("status", "")
-                    ) != "200":
-                        continue
-
-                    url = item.get("url")
-
-                    if not self._looks_like_product_url(
-                        url
-                    ):
-                        continue
-
-                    filename = item.get("filename")
-                    offset = item.get("offset")
-                    length = item.get("length")
-
-                    if (
-                        not filename
-                        or offset is None
-                        or length is None
-                    ):
-                        continue
-
-                    # Une seule capture récente par URL dans ce crawl.
-                    current = self._records.get(url)
-
-                    candidate = {
-                        "url": url,
-                        "filename": filename,
-                        "offset": int(offset),
-                        "length": int(length),
-                        "timestamp": item.get(
-                            "timestamp"
-                        ),
-                        "_collection": self.CRAWL,
-                    }
-
-                    if (
-                        current is None
-                        or str(
-                            candidate.get(
-                                "timestamp",
-                                "",
-                            )
-                        )
-                        > str(
-                            current.get(
-                                "timestamp",
-                                "",
-                            )
-                        )
-                    ):
-                        self._records[url] = candidate
-
-                    if len(
-                        self._records
-                    ) >= self.MAX_URLS:
-                        break
-
-                if len(
-                    self._records
-                ) >= self.MAX_URLS:
+                if len(self._records) >= self.MAX_URLS:
                     break
 
-            if len(
-                self._records
-            ) >= self.MAX_URLS:
+            if len(self._records) >= self.MAX_URLS:
                 break
 
         if not self._records:
             raise RuntimeError(
-                "cluster.idx a été interrogé mais aucune fiche "
-                "GACD exploitable n'a été trouvée."
+                "La plage gacd.fr a été examinée dans l'index "
+                "Common Crawl, mais aucune fiche produit HTTP 200 "
+                "n'a été trouvée dans ce crawl."
             )
 
         print(
             f"GACD : {len(self._records)} URL produit candidates trouvées."
         )
 
-        # Affiche les 10 premières afin que le test soit lisible dans Actions.
         for i, url in enumerate(
             sorted(self._records)[:10],
             1,
