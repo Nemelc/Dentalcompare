@@ -1,0 +1,40 @@
+name: Test scraping DentalCompare
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le site
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dependances
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Tester GACD sur 10 produits
+        working-directory: backend
+        run: python run.py scrape --merchant gacd --limit 10
+
+      - name: Generer les donnees DentalCompare
+        working-directory: backend
+        run: python run.py export
+
+      - name: Enregistrer les resultats
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add backend/data/
+          git diff --cached --quiet || git commit -m "Test scraping GACD"
+          git push
