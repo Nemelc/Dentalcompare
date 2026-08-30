@@ -1,0 +1,36 @@
+name: DentalCompare daily data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 4 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Initialiser la base et importer les donnees disponibles
+        working-directory: backend
+        run: |
+          python import_seed.py data/catalogue_gacd_seed.csv
+          python export_gacd_current.py
+
+      - name: Enregistrer la base et les exports
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add backend/data/dentalcompare.sqlite3 backend/data/gacd_current.json
+          git diff --cached --quiet || git commit -m "Daily DentalCompare data refresh"
+          git push
