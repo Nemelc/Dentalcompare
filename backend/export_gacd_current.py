@@ -21,13 +21,15 @@ def main():
             source_url,
             current_price_eur AS price_eur,
             current_availability AS availability,
+            first_seen_at,
             last_seen_at
-        FROM merchant_products
+        FROM daily_merchant_products
         WHERE merchant = 'GACD'
         ORDER BY brand, name, variant
     """).fetchall()
 
     payload = [dict(r) for r in rows]
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
