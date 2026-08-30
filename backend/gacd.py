@@ -1,8 +1,8 @@
 import re
 from urllib.parse import urljoin
-from core.models import MerchantProduct
-from core.normalize import clean_text, parse_price, normalize_stock
-from .base import BaseScraper
+from models import MerchantProduct
+from normalize import clean_text, parse_price, normalize_stock
+from base import BaseScraper
 
 
 class GACDScraper(BaseScraper):
