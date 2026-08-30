@@ -1,10 +1,11 @@
 
+import io
+import json
 import re
 import time
 from types import SimpleNamespace
 
-import duckdb
-from huggingface_hub import HfFileSystem
+import requests
 from warcio.archiveiterator import ArchiveIterator
 
 from models import MerchantProduct
@@ -14,198 +15,559 @@ from base import BaseScraper
 
 class GACDScraper(BaseScraper):
     """
-    DentalCompare - GACD via le miroir officiel Hugging Face de Common Crawl.
+    DentalCompare - GACD via l'index brut Common Crawl (ZipNum/CDXJ).
 
-    v0.7
-    - aucun appel direct à gacd.fr
-    - aucun s3://
-    - aucun appel à data.commoncrawl.org
-    - URL Index lu via hf:// + HfFileSystem + DuckDB
-    - captures WARC lues via le même bucket Hugging Face
+    v0.8 :
+    - pas d'appel direct à gacd.fr
+    - pas de DuckDB
+    - pas de scan des centaines de fichiers Parquet
+    - pas d'API index.commoncrawl.org
+    - recherche binaire dans cluster.idx via HTTP Range
+    - téléchargement uniquement des petits blocs CDX utiles
     """
 
     merchant = "GACD"
     base_url = "https://www.gacd.fr"
 
-    # Le miroir Hugging Face officiel contient ce crawl et ses URL Index.
-    CRAWL = "CC-MAIN-2026-17"
+    CRAWL = "CC-MAIN-2026-25"
 
-    HF_BUCKET_ROOT = "buckets/commoncrawl/commoncrawl"
-    HF_INDEX_ROOT = (
-        "hf://buckets/commoncrawl/commoncrawl/"
-        "cc-index/table/cc-main/warc/"
-    )
-    HF_CRAWL_ROOT = (
-        "buckets/commoncrawl/commoncrawl/"
+    INDEX_BASE = (
+        "https://data.commoncrawl.org/"
+        f"cc-index/collections/{CRAWL}/indexes/"
     )
 
-    MAX_INDEX_RESULTS = 500
+    CLUSTER_URL = INDEX_BASE + "cluster.idx"
+    DATA_BASE = "https://data.commoncrawl.org/"
+
+    # On cherche l'apex et www séparément.
+    TARGET_PREFIXES = (
+        "fr,gacd)/",
+        "fr,gacd,www)/",
+    )
+
+    # Nombre maximal d'URL candidates avant filtrage.
+    MAX_URLS = 200
+
+    # Fenêtre utilisée pour la recherche binaire distante.
+    SEARCH_WINDOW = 65536
 
     def __init__(self, delay=0.15):
         super().__init__(delay=delay)
+
         self._records = {}
 
-        # token=False : on force l'accès public, sans compte Hugging Face.
-        self.hf = HfFileSystem(token=False)
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": (
+                "DentalCompare/0.8 "
+                "(Common Crawl index research)"
+            ),
+            "Accept": "*/*",
+        })
 
-    def _connection(self):
-        con = duckdb.connect(database=":memory:")
+    # ------------------------------------------------------------------
+    # HTTP Range helpers
+    # ------------------------------------------------------------------
 
-        # DuckDB sait déléguer les lectures hf:// au filesystem fsspec
-        # de Hugging Face.
-        con.register_filesystem(self.hf)
-
-        return con
-
-    def _index_glob(self):
-        return (
-            f"{self.HF_INDEX_ROOT}"
-            f"crawl={self.CRAWL}/subset=warc/*.parquet"
-        )
-
-    def _query_url_index(self):
-        path = self._index_glob()
-
-        print("Hugging Face : connexion au bucket Common Crawl...")
-        print(f"Index : {self.CRAWL}")
-
-        con = self._connection()
-
-        sql = f"""
-        SELECT
-            url,
-            warc_filename,
-            warc_record_offset,
-            warc_record_length
-        FROM read_parquet(
-            '{path}',
-            union_by_name=true,
-            hive_partitioning=true
-        )
-        WHERE
-            (
-                url_host_name = 'gacd.fr'
-                OR url_host_name = 'www.gacd.fr'
-            )
-            AND fetch_status = 200
-            AND (
-                lower(url) LIKE '%.html'
-                OR lower(url) LIKE '%/article-%'
-            )
-        LIMIT {int(self.MAX_INDEX_RESULTS)}
+    def _get_remote_size(self, url):
         """
+        Détermine la taille d'un fichier distant sans le télécharger.
+        """
+        try:
+            response = self.session.head(
+                url,
+                timeout=30,
+                allow_redirects=True,
+            )
+
+            if response.ok:
+                length = response.headers.get("Content-Length")
+
+                if length:
+                    return int(length)
+        except requests.RequestException:
+            pass
+
+        # Fallback : demande un seul octet.
+        response = self.session.get(
+            url,
+            headers={"Range": "bytes=0-0"},
+            timeout=30,
+        )
+        response.raise_for_status()
+
+        content_range = response.headers.get("Content-Range", "")
+
+        match = re.search(r"/(\d+)$", content_range)
+
+        if not match:
+            raise RuntimeError(
+                "Impossible de déterminer la taille de cluster.idx."
+            )
+
+        return int(match.group(1))
+
+    def _range_get(self, url, start, end, timeout=45):
+        response = self.session.get(
+            url,
+            headers={
+                "Range": f"bytes={int(start)}-{int(end)}",
+            },
+            timeout=timeout,
+        )
+
+        response.raise_for_status()
+
+        return response.content
+
+    # ------------------------------------------------------------------
+    # cluster.idx
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_cluster_line(line):
+        """
+        Format cluster.idx :
+        <clé SURT> <timestamp> <cdx-file> <offset> <length> <block-id>
+        Les deux premiers champs forment la clé de tri.
+        """
+        line = line.strip()
+
+        if not line:
+            return None
+
+        parts = re.split(r"\s+", line)
+
+        if len(parts) < 6:
+            return None
 
         try:
-            rows = con.execute(sql).fetchall()
-        finally:
-            con.close()
+            return {
+                "surt": parts[0],
+                "timestamp": parts[1],
+                "cdx_file": parts[2],
+                "offset": int(parts[3]),
+                "length": int(parts[4]),
+                "block_id": int(parts[5]),
+                "raw": line,
+            }
+        except (TypeError, ValueError):
+            return None
 
-        records = []
+    def _line_near_offset(self, offset, file_size):
+        """
+        Récupère une ligne complète de cluster.idx autour d'un offset.
+        """
+        half = self.SEARCH_WINDOW // 2
 
-        for url, filename, offset, length in rows:
-            if (
-                not url
-                or not filename
-                or offset is None
-                or length is None
-            ):
-                continue
+        start = max(0, int(offset) - half)
+        end = min(
+            file_size - 1,
+            int(offset) + half,
+        )
 
-            records.append({
-                "url": str(url),
-                "filename": str(filename),
-                "offset": int(offset),
-                "length": int(length),
-                "_collection": self.CRAWL,
-            })
+        payload = self._range_get(
+            self.CLUSTER_URL,
+            start,
+            end,
+        )
 
-        return records
+        text = payload.decode(
+            "utf-8",
+            errors="replace",
+        )
+
+        # Position correspondant exactement à offset dans notre fenêtre.
+        local = int(offset) - start
+
+        # Cherche le début de la ligne.
+        left = text.rfind("\n", 0, local)
+
+        if left == -1:
+            line_start = 0
+        else:
+            line_start = left + 1
+
+        # Cherche la fin de la ligne.
+        right = text.find("\n", local)
+
+        if right == -1:
+            line_end = len(text)
+        else:
+            line_end = right
+
+        line = text[line_start:line_end]
+
+        parsed = self._parse_cluster_line(line)
+
+        if parsed is None:
+            raise RuntimeError(
+                "Impossible de lire une ligne valide de cluster.idx."
+            )
+
+        parsed["_absolute_start"] = start + line_start
+
+        return parsed
+
+    def _find_cluster_position(self, target):
+        """
+        Recherche binaire distante dans cluster.idx.
+        Renvoie un offset situé au voisinage de la première clé >= target.
+        """
+        file_size = self._get_remote_size(
+            self.CLUSTER_URL
+        )
+
+        low = 0
+        high = file_size - 1
+
+        # 40 itérations couvrent largement un fichier de ~100 Mo.
+        for _ in range(40):
+            if high - low < self.SEARCH_WINDOW:
+                break
+
+            mid = (low + high) // 2
+
+            row = self._line_near_offset(
+                mid,
+                file_size,
+            )
+
+            key = row["surt"]
+
+            if key < target:
+                low = max(
+                    low + 1,
+                    row["_absolute_start"] + 1,
+                )
+            else:
+                high = min(
+                    high - 1,
+                    row["_absolute_start"],
+                )
+
+        return max(0, low - self.SEARCH_WINDOW)
+
+    def _cluster_rows_for_prefix(self, prefix):
+        """
+        Lit seulement la petite zone de cluster.idx autour du domaine cible.
+        On garde aussi quelques blocs juste avant/après, car la première URL
+        du domaine peut commencer dans le bloc précédent.
+        """
+        file_size = self._get_remote_size(
+            self.CLUSTER_URL
+        )
+
+        pos = self._find_cluster_position(prefix)
+
+        # Une zone de 1 Mo autour du point trouvé reste très petite
+        # comparée au cluster.idx complet (~100 Mo).
+        start = max(
+            0,
+            pos - 262144,
+        )
+        end = min(
+            file_size - 1,
+            pos + 786432,
+        )
+
+        payload = self._range_get(
+            self.CLUSTER_URL,
+            start,
+            end,
+        )
+
+        text = payload.decode(
+            "utf-8",
+            errors="replace",
+        )
+
+        rows = []
+
+        for line in text.splitlines():
+            row = self._parse_cluster_line(line)
+
+            if row:
+                rows.append(row)
+
+        if not rows:
+            return []
+
+        # Repère la première ligne >= prefix.
+        idx = 0
+
+        for i, row in enumerate(rows):
+            if row["surt"] >= prefix:
+                idx = i
+                break
+        else:
+            idx = len(rows) - 1
+
+        # Le bloc précédent peut contenir le début de la plage.
+        first = max(0, idx - 2)
+
+        # Quelques blocs suffisent pour notre test initial.
+        last = min(
+            len(rows),
+            idx + 8,
+        )
+
+        return rows[first:last]
+
+    # ------------------------------------------------------------------
+    # CDX blocks
+    # ------------------------------------------------------------------
+
+    def _fetch_cdx_block(self, row):
+        url = self.INDEX_BASE + row["cdx_file"]
+
+        payload = self._range_get(
+            url,
+            row["offset"],
+            row["offset"] + row["length"] - 1,
+        )
+
+        try:
+            data = gzip.decompress(payload)
+        except OSError as exc:
+            raise RuntimeError(
+                f"Bloc CDX non décompressable : {row['cdx_file']} "
+                f"offset={row['offset']}"
+            ) from exc
+
+        return data.decode(
+            "utf-8",
+            errors="replace",
+        )
+
+    @staticmethod
+    def _parse_cdx_line(line):
+        """
+        CDXJ :
+        <urlkey> <timestamp> {json}
+        """
+        try:
+            urlkey, timestamp, payload = line.split(
+                " ",
+                2,
+            )
+            meta = json.loads(payload)
+        except Exception:
+            return None
+
+        return {
+            "urlkey": urlkey,
+            "timestamp": timestamp,
+            **meta,
+        }
+
+    @staticmethod
+    def _is_gacd_urlkey(urlkey):
+        return (
+            urlkey.startswith("fr,gacd)/")
+            or urlkey.startswith("fr,gacd,www)/")
+        )
+
+    @staticmethod
+    def _looks_like_product_url(url):
+        if not url:
+            return False
+
+        low = url.lower()
+
+        if any(x in low for x in (
+            "/centre-aide/",
+            "/qui-sommes-nous/",
+            "/catalogsearch/",
+            "/customer/",
+            "/checkout/",
+            "/mentions-",
+            "/conditions-",
+            "/contact",
+            "/faq",
+            "/blog/",
+            "/media/",
+            "/static/",
+        )):
+            return False
+
+        return (
+            low.endswith(".html")
+            or "/article-" in low
+        )
 
     def discover_product_urls(self):
         self._records = {}
 
         print(
-            "GACD : recherche via le miroir Hugging Face "
-            "de Common Crawl..."
+            "GACD : recherche ciblée dans cluster.idx "
+            f"({self.CRAWL})..."
         )
 
-        try:
-            records = self._query_url_index()
-        except Exception as exc:
-            raise RuntimeError(
-                "Impossible de lire l'URL Index depuis Hugging Face. "
-                f"{type(exc).__name__}: {exc}"
-            ) from exc
+        seen_blocks = set()
 
-        print(
-            f"Hugging Face : {len(records)} URL GACD candidates trouvées."
-        )
+        for prefix in self.TARGET_PREFIXES:
+            print(
+                f"  Recherche du préfixe {prefix}"
+            )
 
-        for row in records:
-            url = row["url"]
-            low = url.lower()
+            rows = self._cluster_rows_for_prefix(
+                prefix
+            )
 
-            # Pages clairement non-produits.
-            if any(x in low for x in (
-                "/centre-aide/",
-                "/qui-sommes-nous/",
-                "/catalogsearch/",
-                "/customer/",
-                "/checkout/",
-                "/mentions-",
-                "/conditions-",
-                "/contact",
-                "/faq",
-                "/blog/",
-            )):
-                continue
+            print(
+                f"  {len(rows)} blocs CDX candidats"
+            )
 
-            self._records[url] = row
+            for row in rows:
+                block_key = (
+                    row["cdx_file"],
+                    row["offset"],
+                    row["length"],
+                )
+
+                if block_key in seen_blocks:
+                    continue
+
+                seen_blocks.add(block_key)
+
+                try:
+                    text = self._fetch_cdx_block(
+                        row
+                    )
+                except Exception as exc:
+                    print(
+                        f"  Bloc ignoré : {exc}"
+                    )
+                    continue
+
+                for line in text.splitlines():
+                    item = self._parse_cdx_line(
+                        line
+                    )
+
+                    if not item:
+                        continue
+
+                    if not self._is_gacd_urlkey(
+                        item["urlkey"]
+                    ):
+                        continue
+
+                    if str(
+                        item.get("status", "")
+                    ) != "200":
+                        continue
+
+                    url = item.get("url")
+
+                    if not self._looks_like_product_url(
+                        url
+                    ):
+                        continue
+
+                    filename = item.get("filename")
+                    offset = item.get("offset")
+                    length = item.get("length")
+
+                    if (
+                        not filename
+                        or offset is None
+                        or length is None
+                    ):
+                        continue
+
+                    # Une seule capture récente par URL dans ce crawl.
+                    current = self._records.get(url)
+
+                    candidate = {
+                        "url": url,
+                        "filename": filename,
+                        "offset": int(offset),
+                        "length": int(length),
+                        "timestamp": item.get(
+                            "timestamp"
+                        ),
+                        "_collection": self.CRAWL,
+                    }
+
+                    if (
+                        current is None
+                        or str(
+                            candidate.get(
+                                "timestamp",
+                                "",
+                            )
+                        )
+                        > str(
+                            current.get(
+                                "timestamp",
+                                "",
+                            )
+                        )
+                    ):
+                        self._records[url] = candidate
+
+                    if len(
+                        self._records
+                    ) >= self.MAX_URLS:
+                        break
+
+                if len(
+                    self._records
+                ) >= self.MAX_URLS:
+                    break
+
+            if len(
+                self._records
+            ) >= self.MAX_URLS:
+                break
 
         if not self._records:
             raise RuntimeError(
-                "L'URL Index Hugging Face a été interrogé, "
-                "mais aucune page GACD exploitable n'a été trouvée."
+                "cluster.idx a été interrogé mais aucune fiche "
+                "GACD exploitable n'a été trouvée."
             )
 
         print(
-            f"GACD : {len(self._records)} pages candidates conservées."
+            f"GACD : {len(self._records)} URL produit candidates trouvées."
         )
 
-        return sorted(self._records.keys())
+        # Affiche les 10 premières afin que le test soit lisible dans Actions.
+        for i, url in enumerate(
+            sorted(self._records)[:10],
+            1,
+        ):
+            print(
+                f"  URL {i}: {url}"
+            )
 
-    @staticmethod
-    def _hf_path_from_warc_filename(filename):
-        filename = filename.lstrip("/")
-
-        # Les chemins Common Crawl ressemblent à :
-        # crawl-data/CC-MAIN-2026-17/segments/.../warc/....warc.gz
-        return (
-            "buckets/commoncrawl/commoncrawl/"
-            + filename
+        return sorted(
+            self._records.keys()
         )
+
+    # ------------------------------------------------------------------
+    # WARC
+    # ------------------------------------------------------------------
 
     def _fetch_warc_html(self, row):
-        path = self._hf_path_from_warc_filename(
-            row["filename"]
-        )
-
-        offset = int(row["offset"])
+        start = int(row["offset"])
         length = int(row["length"])
+        end = start + length - 1
+
+        warc_url = (
+            self.DATA_BASE
+            + row["filename"].lstrip("/")
+        )
 
         time.sleep(self.delay)
 
-        # HfFileSystem/fsspec permet seek + read :
-        # on ne télécharge donc que la zone du gros fichier WARC
-        # contenant la page qui nous intéresse.
-        with self.hf.open(path, "rb") as remote:
-            remote.seek(offset)
-            payload = remote.read(length)
-
-        if not payload:
-            raise RuntimeError(
-                "Capture WARC vide depuis Hugging Face."
-            )
+        payload = self._range_get(
+            warc_url,
+            start,
+            end,
+            timeout=60,
+        )
 
         for record in ArchiveIterator(
             io.BytesIO(payload)
@@ -213,7 +575,9 @@ class GACDScraper(BaseScraper):
             if record.rec_type != "response":
                 continue
 
-            raw = record.content_stream().read()
+            raw = (
+                record.content_stream().read()
+            )
 
             content_type = ""
 
@@ -248,7 +612,7 @@ class GACDScraper(BaseScraper):
                 )
 
         raise RuntimeError(
-            "Aucune réponse HTML trouvée dans la capture WARC."
+            "Aucune réponse HTML dans la capture WARC."
         )
 
     def get(self, url):
@@ -259,13 +623,15 @@ class GACDScraper(BaseScraper):
                 f"Capture Common Crawl introuvable : {url}"
             )
 
-        html = self._fetch_warc_html(row)
-
         return SimpleNamespace(
-            text=html,
+            text=self._fetch_warc_html(row),
             status_code=200,
             url=url,
         )
+
+    # ------------------------------------------------------------------
+    # GACD parser
+    # ------------------------------------------------------------------
 
     @staticmethod
     def _variant_name(
@@ -338,7 +704,9 @@ class GACDScraper(BaseScraper):
 
         products = []
 
-        for i, gacd_match in enumerate(markers):
+        for i, gacd_match in enumerate(
+            markers
+        ):
             end = (
                 markers[i + 1].start()
                 if i + 1 < len(markers)
@@ -415,10 +783,13 @@ class GACDScraper(BaseScraper):
                     ),
                     attributes={
                         "source": (
-                            "common_crawl_huggingface"
+                            "common_crawl_cluster_idx"
                         ),
                         "common_crawl_collection": (
                             meta.get("_collection")
+                        ),
+                        "archive_timestamp": (
+                            meta.get("timestamp")
                         ),
                     },
                 )
