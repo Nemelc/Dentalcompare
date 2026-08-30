@@ -24,17 +24,5 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Diagnostic GACD Common Crawl
-  working-directory: backend
-  run: python diagnostic_gacd_cdx.py
-
-      - name: Generer les donnees DentalCompare
         working-directory: backend
-        run: python run.py export
-
-      - name: Enregistrer les resultats
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add backend/data/
-          git diff --cached --quiet || git commit -m "Test scraping GACD"
-          git push
+        run: python diagnostic_gacd_cdx.py
