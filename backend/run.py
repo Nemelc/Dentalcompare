@@ -1,9 +1,9 @@
 import argparse
 from config import DB_PATH, EXPORT_PATH
-from db.database import Database
-from exporter.frontend import export_frontend
-from scrapers.gacd import GACDScraper
-from scrapers.mega_dental import MegaDentalScraper
+from database import Database
+from frontend import export_frontend
+from gacd import GACDScraper
+from mega_dental import MegaDentalScraper
 
 SCRAPERS = {"gacd": GACDScraper, "mega": MegaDentalScraper}
 
