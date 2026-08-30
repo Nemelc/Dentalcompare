@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from rapidfuzz.fuzz import token_set_ratio
-from .models import MerchantProduct
-from .normalize import (
+from models import MerchantProduct
+from normalize import (
     fold, normalize_brand, normalize_reference, extract_variant_tokens, extract_packaging
 )
 
