@@ -2,9 +2,9 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from core.models import MerchantProduct
-from core.matcher import compare
-from core.normalize import normalize_reference, normalize_brand
+from models import MerchantProduct
+from matcher import compare
+from normalize import normalize_reference, normalize_brand
 from config import AUTO_MATCH_THRESHOLD, REVIEW_MATCH_THRESHOLD
 
 SCHEMA = """
