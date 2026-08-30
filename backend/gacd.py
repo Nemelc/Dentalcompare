@@ -9,30 +9,12 @@ class GACDScraper(BaseScraper):
     merchant = "GACD"
     base_url = "https://www.gacd.fr"
 
-    def discover_product_urls(self):
-        """Try public sitemap(s). If GACD changes sitemap layout, seed URLs can be supplied externally."""
-        candidates = ["/sitemap.xml", "/sitemap_index.xml"]
-        urls = set()
-        for path in candidates:
-            try:
-                text = self.get(urljoin(self.base_url, path)).text
-            except Exception:
-                continue
-            soup = self.soup(text)
-            locs = [x.get_text(strip=True) for x in soup.find_all("loc")]
-            # Sitemap index -> fetch child sitemaps; product sitemap -> product URLs.
-            for loc in locs:
-                if loc.endswith(".xml"):
-                    try:
-                        child = self.get(loc).text
-                        cs = self.soup(child)
-                        urls.update(x.get_text(strip=True) for x in cs.find_all("loc") if self._looks_product(x.get_text(strip=True)))
-                    except Exception:
-                        continue
-                elif self._looks_product(loc):
-                    urls.add(loc)
-        return sorted(urls)
-
+   def discover_product_urls(self):
+    """URLs de test réelles GACD pour valider le scraper."""
+    return [
+        "https://www.gacd.fr/tooth-mousse-tubes-10-chapeau.html",
+        "https://www.gacd.fr/tub-a-materiaux-chapeau.html",
+    ]
     @staticmethod
     def _looks_product(url: str) -> bool:
         blocked = ("/centre-aide/", "/qui-sommes-nous/", "/catalogsearch/", "/customer/", "/checkout/")
