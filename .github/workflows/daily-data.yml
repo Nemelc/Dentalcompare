@@ -21,16 +21,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Initialiser la base et importer les donnees disponibles
+      - name: Importer le catalogue GACD
         working-directory: backend
         run: |
-          python import_seed.py data/catalogue_gacd_seed.csv
-          python export_gacd_current.py
+          python daily_import.py data/catalogue_gacd_seed.csv
+          python daily_export.py
 
-      - name: Enregistrer la base et les exports
+      - name: Enregistrer les donnees
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add backend/data/dentalcompare.sqlite3 backend/data/gacd_current.json
+          git add backend/data/daily_catalog.sqlite3 backend/data/gacd_current.json
           git diff --cached --quiet || git commit -m "Daily DentalCompare data refresh"
           git push
