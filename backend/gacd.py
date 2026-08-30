@@ -1,4 +1,4 @@
-import io
+
 import re
 import time
 from types import SimpleNamespace
@@ -13,21 +13,23 @@ from base import BaseScraper
 
 
 class GACDScraper(BaseScraper):
-    """Récupère des copies archivées de pages GACD via le Common Crawl URL Index."""
+    """
+    GACD via le Common Crawl URL Index.
+
+    v0.6 :
+    - aucun accès direct à gacd.fr
+    - aucun accès s3://
+    - lecture des fichiers Parquet publics via HTTPS
+    - crawl de test : CC-MAIN-2025-51
+    """
 
     merchant = "GACD"
     base_url = "https://www.gacd.fr"
 
-    CRAWLS = [
-        "CC-MAIN-2026-25",
-        "CC-MAIN-2026-21",
-        "CC-MAIN-2026-17",
-        "CC-MAIN-2026-12",
-        "CC-MAIN-2026-08",
-        "CC-MAIN-2026-04",
-        "CC-MAIN-2025-51",
-        "CC-MAIN-2025-47",
-    ]
+    # Common Crawl a publié le nom exact des fichiers de ce crawl.
+    CRAWL = "CC-MAIN-2025-51"
+    PARQUET_UUID = "2e1354aa-67a6-459b-81f6-7e2c39db0a5b"
+    PARQUET_COUNT = 300
 
     CC_DATA_URL = "https://data.commoncrawl.org/"
     MAX_INDEX_RESULTS = 500
@@ -35,9 +37,10 @@ class GACDScraper(BaseScraper):
     def __init__(self, delay=0.15):
         super().__init__(delay=delay)
         self._records = {}
+
         self.archive_session = requests.Session()
         self.archive_session.headers.update({
-            "User-Agent": "DentalCompare/0.5 (Common Crawl catalog research)",
+            "User-Agent": "DentalCompare/0.6 (Common Crawl catalog research)",
             "Accept": "*/*",
         })
 
@@ -51,35 +54,44 @@ class GACDScraper(BaseScraper):
 
         con.execute("LOAD httpfs")
 
-        # Common Crawl est un bucket S3 public.
-        # On crée un secret sans identifiants, uniquement avec la région,
-        # afin de forcer un accès anonyme/unsigned.
+        # Un peu plus tolérant pour les lectures HTTP distantes.
         try:
-            con.execute("""
-                CREATE OR REPLACE SECRET commoncrawl_public (
-                    TYPE S3,
-                    PROVIDER config,
-                    KEY_ID '',
-                    SECRET '',
-                    REGION 'us-east-1',
-                    SCOPE 's3://commoncrawl'
-                )
-            """)
+            con.execute("SET http_timeout=60")
         except Exception:
-            # Fallback compatible avec certaines versions DuckDB.
-            con.execute("SET s3_region='us-east-1'")
-            con.execute("SET s3_access_key_id=''")
-            con.execute("SET s3_secret_access_key=''")
+            pass
 
         return con
 
-    def _query_url_index(self, crawl):
-        path = (
-            "s3://commoncrawl/cc-index/table/cc-main/warc/"
-            f"crawl={crawl}/subset=warc/*.parquet"
+    def _parquet_urls(self):
+        base = (
+            f"{self.CC_DATA_URL}"
+            "cc-index/table/cc-main/warc/"
+            f"crawl={self.CRAWL}/subset=warc/"
         )
 
-        # On utilise uniquement des colonnes stables de l'URL Index officiel.
+        return [
+            (
+                f"{base}"
+                f"part-{i:05d}-{self.PARQUET_UUID}.c000.gz.parquet"
+            )
+            for i in range(self.PARQUET_COUNT)
+        ]
+
+    @staticmethod
+    def _sql_string(value):
+        return "'" + value.replace("'", "''") + "'"
+
+    def _query_url_index(self):
+        urls = self._parquet_urls()
+
+        # IMPORTANT :
+        # On fournit à DuckDB la liste exacte des fichiers HTTPS.
+        # Il n'a donc plus besoin de faire un LIST sur S3.
+        parquet_list = ",\n".join(
+            self._sql_string(url)
+            for url in urls
+        )
+
         sql = f"""
         SELECT
             url,
@@ -87,8 +99,8 @@ class GACDScraper(BaseScraper):
             warc_record_offset,
             warc_record_length
         FROM read_parquet(
-            '{path}',
-            hive_partitioning=true
+            [{parquet_list}],
+            union_by_name=true
         )
         WHERE
             url_host_name IN ('gacd.fr', 'www.gacd.fr')
@@ -96,10 +108,11 @@ class GACDScraper(BaseScraper):
                 lower(url) LIKE '%.html'
                 OR lower(url) LIKE '%/article-%'
             )
-        LIMIT {self.MAX_INDEX_RESULTS}
+        LIMIT {int(self.MAX_INDEX_RESULTS)}
         """
 
         con = self._connection()
+
         try:
             rows = con.execute(sql).fetchall()
         finally:
@@ -108,7 +121,12 @@ class GACDScraper(BaseScraper):
         result = []
 
         for url, filename, offset, length in rows:
-            if not url or not filename or offset is None or length is None:
+            if (
+                not url
+                or not filename
+                or offset is None
+                or length is None
+            ):
                 continue
 
             result.append({
@@ -116,83 +134,84 @@ class GACDScraper(BaseScraper):
                 "filename": filename,
                 "offset": int(offset),
                 "length": int(length),
-                "_collection": crawl,
+                "_collection": self.CRAWL,
             })
 
         return result
 
     def discover_product_urls(self):
         self._records = {}
-        errors = []
 
-        print("GACD : recherche dans le Common Crawl URL Index...")
+        print(
+            "GACD : recherche dans le Common Crawl URL Index "
+            f"{self.CRAWL} via HTTPS..."
+        )
 
-        for i, crawl in enumerate(self.CRAWLS, 1):
-            print(f"[{i}/{len(self.CRAWLS)}] {crawl}")
+        try:
+            records = self._query_url_index()
+        except Exception as exc:
+            raise RuntimeError(
+                "Impossible de lire l'URL Index Common Crawl via HTTPS. "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
 
-            try:
-                records = self._query_url_index(crawl)
-            except Exception as exc:
-                errors.append(
-                    f"{crawl}: {type(exc).__name__}: {exc}"
-                )
-                print(f"  erreur : {exc}")
+        print(
+            f"Common Crawl : {len(records)} URL GACD candidates trouvées."
+        )
+
+        for row in records:
+            url = row["url"]
+            low = url.lower()
+
+            # Élimine les pages clairement non-produit.
+            if any(x in low for x in (
+                "/centre-aide/",
+                "/qui-sommes-nous/",
+                "/catalogsearch/",
+                "/customer/",
+                "/checkout/",
+                "/mentions-",
+                "/conditions-",
+                "/contact",
+                "/faq",
+            )):
                 continue
 
-            for row in records:
-                url = row["url"]
-                low = url.lower()
-
-                if any(x in low for x in (
-                    "/centre-aide/",
-                    "/qui-sommes-nous/",
-                    "/catalogsearch/",
-                    "/customer/",
-                    "/checkout/",
-                    "/mentions-",
-                    "/conditions-",
-                )):
-                    continue
-
-                self._records[url] = row
-
-            if self._records:
-                print(
-                    f"  {len(self._records)} pages GACD trouvées "
-                    f"dans {crawl}"
-                )
-                break
-
-            print("  0 page GACD trouvée")
+            self._records[url] = row
 
         if not self._records:
-            details = (
-                " | ".join(errors[-3:])
-                if errors
-                else "aucun résultat"
-            )
             raise RuntimeError(
-                "Aucune page GACD trouvée via le Common Crawl URL Index. "
-                f"Détails : {details}"
+                "Le crawl a été lu correctement, mais aucune URL GACD "
+                "exploitable n'a été trouvée."
             )
+
+        print(
+            f"GACD : {len(self._records)} pages candidates conservées."
+        )
 
         return sorted(self._records.keys())
 
     def _fetch_warc_html(self, row):
-        start = row["offset"]
-        end = start + row["length"] - 1
+        start = int(row["offset"])
+        end = start + int(row["length"]) - 1
 
-        warc_url = self.CC_DATA_URL + row["filename"]
+        filename = row["filename"]
+
+        if filename.startswith("http://") or filename.startswith("https://"):
+            warc_url = filename
+        else:
+            warc_url = self.CC_DATA_URL + filename.lstrip("/")
 
         time.sleep(self.delay)
 
         response = self.archive_session.get(
             warc_url,
             headers={
-                "Range": f"bytes={start}-{end}"
+                "Range": f"bytes={start}-{end}",
             },
-            timeout=45,
+            timeout=60,
         )
+
         response.raise_for_status()
 
         for record in ArchiveIterator(
@@ -202,6 +221,7 @@ class GACDScraper(BaseScraper):
                 continue
 
             raw = record.content_stream().read()
+
             content_type = ""
 
             if record.http_headers:
@@ -399,9 +419,7 @@ class GACDScraper(BaseScraper):
                         else None
                     ),
                     attributes={
-                        "source": (
-                            "common_crawl_url_index"
-                        ),
+                        "source": "common_crawl_url_index_https",
                         "common_crawl_collection": (
                             meta.get("_collection")
                         ),
@@ -480,4 +498,6 @@ class GACDScraper(BaseScraper):
                 )
             ] = product
 
-        return list(unique.values())
+        return list(
+            unique.values()
+        )
