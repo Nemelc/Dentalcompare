@@ -100,7 +100,7 @@
   .mode-panel .hint{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; line-height:1.5; }
 
   .merchant-total-row{
-    display:grid; grid-template-columns:24px 1fr 90px; align-items:center; gap:10px;
+    display:grid; grid-template-columns:24px 1fr 90px auto; align-items:center; gap:10px;
     padding:10px 0; border-bottom:1px solid var(--line);
   }
   .merchant-total-row:last-child{ border-bottom:none; }
@@ -314,6 +314,7 @@ function renderSingleMerchantMode(cart){
           <div class="mcoverage">${r.covered} / ${cart.length} articles disponibles</div>
         </div>
         <span class="mtotal">${r.total.toFixed(2)} €</span>
+        <button class="mini-cta-btn" onclick="revealCta(this)">Voir l'offre →</button>
       </div>
     `).join('');
 
@@ -336,6 +337,7 @@ function renderSingleMerchantMode(cart){
       <span class="rank">${i+1}</span>
       <div class="mname">${r.merchant}</div>
       <span class="mtotal">${r.total.toFixed(2)} €</span>
+      <button class="mini-cta-btn" onclick="revealCta(this)">Voir l'offre →</button>
     </div>
   `).join('');
 
