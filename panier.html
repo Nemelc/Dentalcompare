@@ -317,10 +317,16 @@ function renderSingleMerchantMode(cart){
       </div>
     `).join('');
 
+    const bestPartial = partial[0];
+
     return `
       <h2>Un seul marchand</h2>
       <div class="hint">Aucun marchand ne propose la totalité des ${cart.length} articles de votre panier. Voici les marchands qui en couvrent le plus, avec le sous-total correspondant (hors articles manquants).</div>
       ${rows}
+      <div class="cart-cta-row">
+        <button class="cart-cta-btn" onclick="revealCta(this)">Voir l'offre chez ${bestPartial.merchant} &nbsp;→</button>
+        <div class="cart-cta-note">Redirige vers ${bestPartial.merchant} avec les ${bestPartial.covered} article(s) disponibles chez eux</div>
+      </div>
     `;
   }
 
