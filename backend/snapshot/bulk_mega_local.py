@@ -8,14 +8,6 @@ from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 MEGA_HOSTS = {"www.megadental.fr", "megadental.fr"}
-CHALLENGE_MARKERS = [
-    "just a moment",
-    "checking your browser",
-    "verify you are human",
-    "cf-chl-",
-    "challenges.cloudflare.com",
-    "captcha",
-]
 
 
 def clean(s):
@@ -33,6 +25,27 @@ def parse_price(text):
         return float(raw)
     except ValueError:
         return None
+
+
+def valid_plain_value(value):
+    value = clean(value)
+    if not value or len(value) > 100:
+        return None
+    low = value.lower()
+    if any(ch in value for ch in "{}[];"):
+        return None
+    if any(x in low for x in ["function", "type_id", "writerecentlyviewed", "require(", "datalayer"]):
+        return None
+    return value
+
+
+def valid_reference(value):
+    value = valid_plain_value(value)
+    if not value or len(value) > 60:
+        return None
+    if re.fullmatch(r"(?:S/?O|N/?A|N\.A\.|NC|N/C|Non renseigné|Aucun|DIVERS)", value, re.I):
+        return None
+    return value
 
 
 def load_urls(path):
@@ -63,14 +76,35 @@ def load_done(jsonl_path):
     return done
 
 
-def is_challenge(page):
+def is_real_challenge(page, status=None):
+    if status in (403, 429):
+        return True
     try:
         title = clean(page.title()).lower()
-        html = page.content().lower()
+        body = clean(page.locator("body").inner_text()).lower()
+        normal_product = page.locator("h1").count() > 0 and page.locator(
+            '.product-info-main, [data-price-type="finalPrice"], .price-box'
+        ).count() > 0
     except Exception:
         return True
-    haystack = title + "\n" + html[:200000]
-    return any(marker in haystack for marker in CHALLENGE_MARKERS)
+
+    title_signals = [
+        "just a moment...",
+        "just a moment",
+        "checking your browser",
+        "attention required",
+    ]
+    body_signals = [
+        "checking your browser",
+        "verify you are human",
+        "performing security verification",
+        "enable javascript and cookies to continue",
+    ]
+
+    challenged = title in title_signals or any(body.startswith(x) for x in body_signals)
+    if normal_product:
+        return False
+    return challenged
 
 
 def first_text(page, selectors):
@@ -86,9 +120,83 @@ def first_text(page, selectors):
     return None
 
 
+def value_near_label(page, labels):
+    labels_low = [x.lower() for x in labels]
+    selectors = [
+        "tr",
+        ".product.attribute",
+        ".additional-attributes-wrapper tr",
+        "dl > div",
+        ".product-info-main li",
+        ".product-info-main p",
+    ]
+    for sel in selectors:
+        try:
+            for el in page.query_selector_all(sel):
+                txt = clean(el.inner_text())
+                low = txt.lower()
+                matched = next((lab for lab in labels_low if low.startswith(lab)), None)
+                if not matched:
+                    continue
+                for child_sel in [".value", "td:last-child", "dd", "[data-th]"]:
+                    child = el.query_selector(child_sel)
+                    if child:
+                        val = clean(child.inner_text())
+                        if val and val.lower() not in labels_low:
+                            return val
+                val = re.sub(r"^\s*" + re.escape(matched) + r"\s*:?\s*", "", txt, flags=re.I)
+                if val:
+                    return val
+        except Exception:
+            pass
+    return None
+
+
+def read_jsonld_product(page):
+    result = {"sku": None, "mpn": None, "gtin": None, "brand": None, "image": None}
+    try:
+        queue = []
+        for raw in page.locator('script[type="application/ld+json"]').all_text_contents():
+            try:
+                parsed = json.loads(raw)
+                queue.extend(parsed if isinstance(parsed, list) else [parsed])
+            except Exception:
+                pass
+        while queue:
+            obj = queue.pop(0)
+            if not isinstance(obj, dict):
+                continue
+            if isinstance(obj.get("@graph"), list):
+                queue.extend(obj["@graph"])
+            typ = obj.get("@type")
+            is_product = typ == "Product" or (isinstance(typ, list) and "Product" in typ)
+            if not is_product:
+                continue
+            result["sku"] = result["sku"] or valid_reference(str(obj.get("sku") or ""))
+            result["mpn"] = result["mpn"] or valid_reference(str(obj.get("mpn") or ""))
+            for key in ["gtin13", "gtin14", "gtin12", "gtin8", "gtin"]:
+                g = re.sub(r"\D", "", str(obj.get(key) or ""))
+                if 8 <= len(g) <= 14:
+                    result["gtin"] = result["gtin"] or g
+            b = obj.get("brand")
+            if b and not result["brand"]:
+                if isinstance(b, dict):
+                    result["brand"] = valid_plain_value(str(b.get("name") or ""))
+                else:
+                    result["brand"] = valid_plain_value(str(b))
+            im = obj.get("image")
+            if im and not result["image"]:
+                result["image"] = im[0] if isinstance(im, list) and im else im
+            break
+    except Exception:
+        pass
+    return result
+
+
 def extract_product(page):
     body_text = clean(page.locator("body").inner_text())
     title = clean(page.locator("h1").first.inner_text()) if page.locator("h1").count() else clean(page.title())
+    jsonld = read_jsonld_product(page)
 
     price = None
     for sel in [
@@ -112,74 +220,42 @@ def extract_product(page):
         except Exception:
             pass
 
-    merchant_reference = first_text(page, [
+    merchant_reference = valid_reference(first_text(page, [
         '[itemprop="sku"]',
         '.product.attribute.sku .value',
         '.product-info-main .sku .value',
-    ])
+        '.product-info-stock-sku .sku .value',
+    ]))
     if not merchant_reference:
         try:
             el = page.query_selector('[data-product-sku]')
             if el:
-                merchant_reference = clean(el.get_attribute('data-product-sku') or "") or None
+                merchant_reference = valid_reference(el.get_attribute('data-product-sku') or "")
         except Exception:
             pass
+    merchant_reference = merchant_reference or jsonld["sku"] or valid_reference(value_near_label(page, [
+        "Référence Mega Dental", "Réf. Mega Dental", "Réf Mega Dental", "SKU"
+    ]))
 
-    manufacturer_reference = None
-    m = re.search(r"\bMPN\s*:\s*([^|]{1,60})", body_text, re.I)
-    if m:
-        v = clean(m.group(1))
-        v = re.split(r"\b(?:En stock|Disponible|Rupture|Sur commande)\b", v, maxsplit=1, flags=re.I)[0].strip()
-        if v and not re.fullmatch(r"(?:S/?O|N/?A|NC|Non renseigné)", v, re.I):
-            manufacturer_reference = v
-    if not manufacturer_reference:
-        m = re.search(r"(?:Réf(?:érence)?\s+fabricant|Code\s+fabricant)\s*:?\s*([A-Z0-9._+/-]+)", body_text, re.I)
-        if m:
-            manufacturer_reference = m.group(1)
+    manufacturer_reference = jsonld["mpn"] or valid_reference(value_near_label(page, [
+        "MPN", "Référence fabricant", "Réf. fabricant", "Réf fabricant", "Code fabricant"
+    ]))
 
-    ean = None
-    m = re.search(r"(?:EAN|GTIN)\s*:?\s*(\d{8,14})", body_text, re.I)
-    if m:
-        ean = m.group(1)
+    ean = jsonld["gtin"]
+    if not ean:
+        raw_ean = value_near_label(page, ["EAN", "GTIN", "EAN13", "GTIN13"])
+        digits = re.sub(r"\D", "", raw_ean or "")
+        if 8 <= len(digits) <= 14:
+            ean = digits
 
     availability = None
     m = re.search(r"\b(En stock|Disponible|Sur commande|En réapprovisionnement|Rupture de stock|Indisponible)\b", body_text, re.I)
     if m:
         availability = m.group(1)
 
-    brand = None
-    image = None
-    try:
-        nodes = page.locator('script[type="application/ld+json"]').all_text_contents()
-        queue = []
-        for raw in nodes:
-            try:
-                parsed = json.loads(raw)
-                queue.extend(parsed if isinstance(parsed, list) else [parsed])
-            except Exception:
-                pass
-        while queue:
-            obj = queue.pop(0)
-            if not isinstance(obj, dict):
-                continue
-            if isinstance(obj.get("@graph"), list):
-                queue.extend(obj["@graph"])
-            if obj.get("@type") != "Product":
-                continue
-            if not brand and obj.get("brand"):
-                b = obj["brand"]
-                brand = clean(b.get("name", "")) if isinstance(b, dict) else clean(str(b))
-            if not image and obj.get("image"):
-                im = obj["image"]
-                image = im[0] if isinstance(im, list) and im else im
-    except Exception:
-        pass
+    brand = jsonld["brand"] or valid_plain_value(value_near_label(page, ["Fournisseur", "Marque", "Fabricant"]))
 
-    if not brand:
-        m = re.search(r"(?:Fournisseur|Marque)\s*:\s*([^|]{1,80})", body_text, re.I)
-        if m:
-            brand = clean(m.group(1))
-
+    image = jsonld["image"]
     if not image:
         try:
             image = page.locator('meta[property="og:image"]').get_attribute("content")
@@ -188,9 +264,11 @@ def extract_product(page):
 
     crumbs = []
     try:
+        seen = set()
         for txt in page.locator('.breadcrumbs a, .breadcrumbs li, nav[aria-label*="breadcrumb" i] a').all_text_contents():
             t = clean(txt)
-            if t and (not crumbs or crumbs[-1] != t):
+            if t and t not in seen:
+                seen.add(t)
                 crumbs.append(t)
     except Exception:
         pass
@@ -198,11 +276,11 @@ def extract_product(page):
 
     return {
         "merchant": "Mega Dental",
-        "merchant_reference": merchant_reference or None,
+        "merchant_reference": merchant_reference,
         "manufacturer_reference": manufacturer_reference,
         "ean": ean,
         "name": title,
-        "brand": brand or None,
+        "brand": brand,
         "category": category,
         "price_eur": price,
         "availability": availability,
@@ -214,13 +292,15 @@ def extract_product(page):
 
 def write_final(jsonl_path, output_path):
     products = []
-    for line in Path(jsonl_path).read_text(encoding="utf-8", errors="ignore").splitlines():
-        try:
-            products.append(json.loads(line))
-        except Exception:
-            pass
+    p = Path(jsonl_path)
+    if p.exists():
+        for line in p.read_text(encoding="utf-8", errors="ignore").splitlines():
+            try:
+                products.append(json.loads(line))
+            except Exception:
+                pass
     payload = {
-        "source": "mega_dental_bulk_local_v1",
+        "source": "mega_dental_bulk_local_v2",
         "captured_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "products": products,
     }
@@ -265,8 +345,8 @@ def main():
                     status = resp.status if resp else None
                     page.wait_for_timeout(1200)
 
-                    if status in (403, 429) or is_challenge(page):
-                        print(f"[{global_index}/{len(urls)}] PROTECTION détectée sur {url}. Arrêt sans contournement.")
+                    if is_real_challenge(page, status):
+                        print(f"[{global_index}/{len(urls)}] PROTECTION réelle détectée (HTTP {status}) sur {url}. Arrêt sans contournement.")
                         break
 
                     product = extract_product(page)
