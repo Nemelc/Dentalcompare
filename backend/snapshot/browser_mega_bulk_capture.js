@@ -49,19 +49,104 @@
     return Number.isFinite(n) ? n : null;
   };
 
+  const validPlainValue = value => {
+    const v = clean(value);
+    if (!v || v.length > 100) return null;
+    if (/[{}\[\];]/.test(v)) return null;
+    if (/\b(function|type_id|writeRecentlyViewed|require\(|dataLayer)\b/i.test(v)) return null;
+    return v;
+  };
+
+  const validReference = value => {
+    const v = validPlainValue(value);
+    if (!v) return null;
+    if (/^(?:S\/?O|N\/?A|N\.A\.|NC|N\/C|Non renseigné|Aucun|DIVERS)$/i.test(v)) return null;
+    if (v.length > 60) return null;
+    return v;
+  };
+
   const qText = (doc, selectors) => {
     for (const sel of selectors) {
       const el = doc.querySelector(sel);
-      const value = clean(el?.textContent || el?.getAttribute?.('content') || '');
+      const value = validPlainValue(el?.textContent || el?.getAttribute?.('content') || '');
       if (value) return value;
     }
     return null;
+  };
+
+  const valueNearLabel = (doc, labels) => {
+    const normalizedLabels = labels.map(x => x.toLowerCase());
+    const blocks = doc.querySelectorAll(
+      'tr, .product.attribute, .additional-attributes-wrapper tr, dl > div, .product-info-main li, .product-info-main p'
+    );
+
+    for (const block of blocks) {
+      const text = clean(block.textContent || '');
+      if (!text) continue;
+      const low = text.toLowerCase();
+      const matched = normalizedLabels.find(label => low.startsWith(label.toLowerCase()));
+      if (!matched) continue;
+
+      const explicitValue = block.querySelector('.value, td:last-child, dd, [data-th]');
+      const fromElement = validPlainValue(explicitValue?.textContent || '');
+      if (fromElement && fromElement.toLowerCase() !== matched) return fromElement;
+
+      const escaped = matched.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const m = text.match(new RegExp('^\\s*' + escaped + '\\s*:?\\s*(.+)$', 'i'));
+      const fallback = validPlainValue(m?.[1] || '');
+      if (fallback) return fallback;
+    }
+
+    return null;
+  };
+
+  const readJsonLdProduct = doc => {
+    const result = {
+      sku: null,
+      mpn: null,
+      gtin: null,
+      brand: null,
+      image: null
+    };
+
+    for (const node of doc.querySelectorAll('script[type="application/ld+json"]')) {
+      try {
+        const parsed = JSON.parse(node.textContent);
+        const queue = Array.isArray(parsed) ? [...parsed] : [parsed];
+
+        while (queue.length) {
+          const obj = queue.shift();
+          if (!obj || typeof obj !== 'object') continue;
+          if (Array.isArray(obj['@graph'])) queue.push(...obj['@graph']);
+
+          const types = Array.isArray(obj['@type']) ? obj['@type'] : [obj['@type']];
+          if (!types.includes('Product')) continue;
+
+          if (!result.sku) result.sku = validReference(obj.sku);
+          if (!result.mpn) result.mpn = validReference(obj.mpn);
+          if (!result.gtin) {
+            result.gtin = validReference(obj.gtin13 || obj.gtin14 || obj.gtin12 || obj.gtin8 || obj.gtin);
+          }
+          if (!result.brand && obj.brand) {
+            const rawBrand = typeof obj.brand === 'object' ? obj.brand.name : obj.brand;
+            result.brand = validPlainValue(rawBrand);
+          }
+          if (!result.image && obj.image) {
+            const rawImage = Array.isArray(obj.image) ? obj.image[0] : obj.image;
+            if (typeof rawImage === 'string' && /^https?:\/\//i.test(rawImage)) result.image = rawImage;
+          }
+        }
+      } catch (_) {}
+    }
+
+    return result;
   };
 
   const extractProduct = (html, url) => {
     const doc = parser.parseFromString(html, 'text/html');
     const bodyText = clean(doc.body?.innerText || doc.body?.textContent || '');
     const title = clean(doc.querySelector('h1')?.textContent || doc.title || '');
+    const ld = readJsonLdProduct(doc);
 
     let price = null;
     for (const sel of [
@@ -93,69 +178,49 @@
       price = m ? parsePrice(m[0]) : null;
     }
 
-    let merchantReference = qText(doc, [
+    let merchantReference = validReference(qText(doc, [
       '[itemprop="sku"]',
       '.product.attribute.sku .value',
-      '.product-info-main .sku .value'
-    ]);
+      '.product-info-main .sku .value',
+      '.product-info-stock-sku .sku .value'
+    ]));
 
     if (!merchantReference) {
       const el = doc.querySelector('[data-product-sku]');
-      merchantReference = clean(el?.getAttribute('data-product-sku') || '') || null;
+      merchantReference = validReference(el?.getAttribute('data-product-sku') || '');
     }
 
-    let manufacturerReference = null;
-    const mpnMatch = bodyText.match(/\bMPN\s*:\s*([^|]{1,60})/i);
-
-    if (mpnMatch) {
-      const v = clean(mpnMatch[1])
-        .split(/\b(?:En stock|Disponible|Rupture|Sur commande)\b/i)[0]
-        .trim();
-
-      if (v && !/^(?:S\/?O|N\/?A|NC|Non renseigné)$/i.test(v)) {
-        manufacturerReference = v;
-      }
+    if (!merchantReference) merchantReference = validReference(ld.sku);
+    if (!merchantReference) {
+      merchantReference = validReference(valueNearLabel(doc, [
+        'Référence Mega Dental', 'Réf. Mega Dental', 'Réf Mega Dental', 'SKU'
+      ]));
     }
 
+    let manufacturerReference = validReference(ld.mpn);
     if (!manufacturerReference) {
-      const m = bodyText.match(/(?:Réf(?:érence)?\s+fabricant|Code\s+fabricant)\s*:?\s*([A-Z0-9._+\/-]+)/i);
-      manufacturerReference = m ? m[1] : null;
+      manufacturerReference = validReference(valueNearLabel(doc, [
+        'MPN', 'Référence fabricant', 'Réf. fabricant', 'Réf fabricant', 'Code fabricant'
+      ]));
     }
 
-    const eanMatch = bodyText.match(/(?:EAN|GTIN)\s*:?\s*(\d{8,14})/i);
+    let ean = null;
+    const ldGtin = String(ld.gtin || '').replace(/\D/g, '');
+    if (/^\d{8,14}$/.test(ldGtin)) ean = ldGtin;
+    if (!ean) {
+      const explicitEan = valueNearLabel(doc, ['EAN', 'GTIN', 'EAN13', 'GTIN13']);
+      const digits = String(explicitEan || '').replace(/\D/g, '');
+      if (/^\d{8,14}$/.test(digits)) ean = digits;
+    }
+
     const availabilityMatch = bodyText.match(/\b(En stock|Disponible|Sur commande|En réapprovisionnement|Rupture de stock|Indisponible)\b/i);
 
-    let brand = null;
-    let image = null;
-
-    for (const node of doc.querySelectorAll('script[type="application/ld+json"]')) {
-      try {
-        const parsed = JSON.parse(node.textContent);
-        const queue = Array.isArray(parsed) ? [...parsed] : [parsed];
-
-        while (queue.length) {
-          const obj = queue.shift();
-          if (!obj || typeof obj !== 'object') continue;
-          if (Array.isArray(obj['@graph'])) queue.push(...obj['@graph']);
-
-          const types = Array.isArray(obj['@type']) ? obj['@type'] : [obj['@type']];
-          if (!types.includes('Product')) continue;
-
-          if (!brand && obj.brand) {
-            brand = typeof obj.brand === 'object' ? obj.brand.name : obj.brand;
-          }
-          if (!image && obj.image) {
-            image = Array.isArray(obj.image) ? obj.image[0] : obj.image;
-          }
-        }
-      } catch (_) {}
-    }
-
+    let brand = validPlainValue(ld.brand);
     if (!brand) {
-      const m = bodyText.match(/(?:Fournisseur|Marque)\s*:\s*([^|]{1,80})/i);
-      if (m) brand = clean(m[1]);
+      brand = validPlainValue(valueNearLabel(doc, ['Fournisseur', 'Marque', 'Fabricant']));
     }
 
+    let image = ld.image;
     if (!image) {
       image = doc.querySelector('meta[property="og:image"]')?.content || null;
     }
@@ -174,8 +239,8 @@
     return {
       merchant: 'Mega Dental',
       merchant_reference: merchantReference || null,
-      manufacturer_reference: manufacturerReference,
-      ean: eanMatch ? eanMatch[1] : null,
+      manufacturer_reference: manufacturerReference || null,
+      ean,
       name: title,
       brand: brand || null,
       category,
@@ -188,7 +253,7 @@
   };
 
   console.clear();
-  console.log('DentalCompare — test automatique Mega Dental v2');
+  console.log('DentalCompare — test automatique Mega Dental v3');
   console.log('Chargement des sitemaps…');
 
   const allUrls = [];
@@ -258,7 +323,10 @@
           });
         } else {
           products.push(product);
-          console.log(`✓ ${product.name} — ${product.price_eur} € — ${product.brand || 'marque ?'}`);
+          console.log(
+            `✓ ${product.name} — ${product.price_eur} € — ${product.brand || 'marque ?'} — ` +
+            `réf Mega: ${product.merchant_reference || '?'} — réf fab: ${product.manufacturer_reference || '?'}`
+          );
         }
       }
     } catch (e) {
@@ -275,7 +343,7 @@
   }
 
   const payload = {
-    source: 'mega_dental_bulk_browser_test_v2',
+    source: 'mega_dental_bulk_browser_test_v3',
     requested_limit: LIMIT,
     discovered_product_urls: allUrls.length,
     completed: products.length,
