@@ -10,33 +10,57 @@ class MegaDentalScraper(BaseScraper):
     base_url = "https://www.megadental.fr"
 
     def discover_product_urls(self):
-        candidates = ["/sitemap.xml", "/sitemap/products", "/sitemap_index.xml"]
+        # Le robots.txt de Mega Dental déclare explicitement ce sitemap XML.
+        # Les anciennes routes /sitemap et /sitemap/products renvoient 403 depuis GitHub Actions.
+        candidates = [
+            "/media/sitemap/sitemap_14.xml",
+            "/sitemap.xml",
+            "/sitemap_index.xml",
+        ]
         urls = set()
+
         for path in candidates:
             try:
                 r = self.get(urljoin(self.base_url, path))
             except Exception:
                 continue
+
             soup = self.soup(r.text)
             locs = [x.get_text(strip=True) for x in soup.find_all("loc")]
+
             if locs:
-                urls.update(x for x in locs if self._looks_product(x))
                 for loc in locs:
-                    if loc.endswith(".xml"):
+                    if self._looks_product(loc):
+                        urls.add(loc)
+                    elif loc.endswith(".xml"):
                         try:
                             child = self.soup(self.get(loc).text)
-                            urls.update(x.get_text(strip=True) for x in child.find_all("loc") if self._looks_product(x.get_text(strip=True)))
+                            for node in child.find_all("loc"):
+                                child_url = node.get_text(strip=True)
+                                if self._looks_product(child_url):
+                                    urls.add(child_url)
                         except Exception:
                             pass
-            else:
-                # HTML sitemap fallback.
-                urls.update(urljoin(self.base_url, a.get("href")) for a in soup.select("a[href]") if self._looks_product(urljoin(self.base_url, a.get("href"))))
+
         return sorted(urls)
 
     @staticmethod
     def _looks_product(url: str) -> bool:
-        blocked = ("/brands/", "/categories/", "/sitemap", "/contact", "/account", "/cart")
-        return url.startswith("https://www.megadental.fr/") and not any(x in url for x in blocked)
+        blocked = (
+            "/brands/",
+            "/categories/",
+            "/sitemap",
+            "/contact",
+            "/account",
+            "/cart",
+            "/media/",
+            "/static/",
+        )
+        return (
+            url.startswith("https://www.megadental.fr/")
+            and not url.endswith(".xml")
+            and not any(x in url for x in blocked)
+        )
 
     def parse_product(self, url: str, html: str):
         soup = self.soup(html)
@@ -61,27 +85,45 @@ class MegaDentalScraper(BaseScraper):
                 offer_price = parse_price(str(offers.get("price"))) or offer_price
                 availability = normalize_stock(str(offers.get("availability"))) or availability
 
-        # Mega often displays its own reference as "Réf. 5088-010".
         merchant_ref = None
-        for pat in [r"\bRéf\.?\s*:?\s*([A-Z0-9][A-Z0-9._/-]+)", r"\bReference\s*:?\s*([A-Z0-9][A-Z0-9._/-]+)"]:
+        for pat in [
+            r"\bRéf\.?\s*:?\s*([A-Z0-9][A-Z0-9._/-]+)",
+            r"\bReference\s*:?\s*([A-Z0-9][A-Z0-9._/-]+)",
+        ]:
             m = re.search(pat, page_text, re.I)
             if m:
-                merchant_ref = m.group(1); break
+                merchant_ref = m.group(1)
+                break
 
-        # Manufacturer reference labels vary by templates; only set when explicit.
         mref = None
-        m = re.search(r"(?:Réf(?:érence)?\s+fabricant|Code\s+fabricant)\s*:?\s*([A-Z0-9._+/-]+)", page_text, re.I)
-        if m: mref = m.group(1)
+        m = re.search(
+            r"(?:Réf(?:érence)?\s+fabricant|Code\s+fabricant)\s*:?\s*([A-Z0-9._+/-]+)",
+            page_text,
+            re.I,
+        )
+        if m:
+            mref = m.group(1)
 
         if offer_price is None:
             prices = re.findall(r"\d[\d\s\u202f]*(?:,\d{1,2})?\s*€", page_text)
             offer_price = parse_price(prices[0]) if prices else None
 
-        stock_match = re.search(r"(En stock|Disponible|Sur commande|En réapprovisionnement|Rupture|Indisponible)", page_text, re.I)
+        stock_match = re.search(
+            r"(En stock|Disponible|Sur commande|En réapprovisionnement|Rupture|Indisponible)",
+            page_text,
+            re.I,
+        )
         availability = availability or normalize_stock(stock_match.group(1) if stock_match else None)
 
         return [MerchantProduct(
-            merchant=self.merchant, url=url, name=title, price=offer_price,
-            merchant_reference=merchant_ref, manufacturer_reference=mref,
-            brand=brand, ean=ean, image_url=image_url, availability=availability,
+            merchant=self.merchant,
+            url=url,
+            name=title,
+            price=offer_price,
+            merchant_reference=merchant_ref,
+            manufacturer_reference=mref,
+            brand=brand,
+            ean=ean,
+            image_url=image_url,
+            availability=availability,
         )]
