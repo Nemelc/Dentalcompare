@@ -1,0 +1,301 @@
+(() => {
+  const txt = document.body?.innerText || "";
+  const title = document.querySelector("h1")?.innerText?.trim() || document.title;
+  const refRe = /Réf\.\s*GACD\s*:\s*([A-Z0-9-]+)/gi;
+  const fabRe = /Réf\.\s*Fabricant\s*:\s*([A-Z0-9+._ /-]+)/i;
+  const priceRe = /(\d{1,5}(?:[ .]\d{3})*[,.]\d{2})\s*€/;
+  const stocks = ["En stock","Sur commande","En réapprovisionnement","Arrêté"];
+  const ms=[...txt.matchAll(refRe)];
+  const products=[];
+
+  const priceToNumber=s=>Number(s.replace(/\u202f/g,"").replace(/ /g,"").replace(/\./g,"").replace(",","."));
+
+  ms.forEach((m,i)=>{
+    const start=m.index, end=i+1<ms.length?ms[i+1].index:txt.length;
+    const block=txt.slice(start,end);
+    const fab=block.match(fabRe);
+    const price=block.match(priceRe);
+    const availability=stocks.find(s=>block.toLowerCase().includes(s.toLowerCase()))||null;
+    const lines=block.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    let name=title;
+    const ri=lines.findIndex(x=>/Réf\.\s*GACD\s*:/i.test(x));
+    if(ri>=0 && lines[ri+1]) name=lines[ri+1];
+    products.push({
+      merchant:"GACD",
+      merchant_reference:m[1],
+      manufacturer_reference:fab?fab[1].trim():null,
+      name,
+      price_eur:price?priceToNumber(price[1]):null,
+      availability,
+      source_url:location.href,
+      captured_at:new Date().toISOString()
+    });
+  });
+
+  const payload={source:"gacd_browser_capture",page_title:title,source_url:location.href,captured_at:new Date().toISOString(),products};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`gacd_${new Date().toISOString().replace(/[:.]/g,"-")}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  alert(`${products.length} référence(s) capturée(s)`);
+})();
+
+from __future__ import annotations
+import json, sqlite3
+from dataclasses import dataclass, asdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+ROOT = Path(__file__).resolve().parent
+DB_PATH = ROOT / "data" / "catalog_snapshots.sqlite3"
+
+@dataclass
+class Offer:
+    merchant: str
+    source_url: str
+    name: str
+    merchant_reference: Optional[str] = None
+    manufacturer_reference: Optional[str] = None
+    ean: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    variant: Optional[str] = None
+    packaging: Optional[str] = None
+    price_eur: Optional[float] = None
+    availability: Optional[str] = None
+    image_url: Optional[str] = None
+    captured_at: Optional[str] = None
+
+def now():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+def connect():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    return con
+
+def init_db():
+    con = connect()
+    con.executescript("""
+    CREATE TABLE IF NOT EXISTS snapshot_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        merchant TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        source_mode TEXT NOT NULL,
+        item_count INTEGER NOT NULL DEFAULT 0,
+        notes TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id INTEGER NOT NULL,
+        merchant TEXT NOT NULL,
+        source_url TEXT NOT NULL,
+        name TEXT NOT NULL,
+        merchant_reference TEXT,
+        manufacturer_reference TEXT,
+        ean TEXT,
+        brand TEXT,
+        category TEXT,
+        variant TEXT,
+        packaging TEXT,
+        price_eur REAL,
+        availability TEXT,
+        image_url TEXT,
+        captured_at TEXT NOT NULL,
+        FOREIGN KEY(run_id) REFERENCES snapshot_runs(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_offers_run ON offers(run_id);
+    CREATE INDEX IF NOT EXISTS idx_offers_mref ON offers(merchant, merchant_reference);
+    CREATE INDEX IF NOT EXISTS idx_offers_fref ON offers(manufacturer_reference);
+    CREATE INDEX IF NOT EXISTS idx_offers_ean ON offers(ean);
+    """)
+    con.commit()
+    con.close()
+
+def begin_run(merchant: str, source_mode: str, notes: str = "") -> int:
+    init_db()
+    con = connect()
+    cur = con.execute(
+        "INSERT INTO snapshot_runs(merchant, started_at, source_mode, notes) VALUES(?,?,?,?)",
+        (merchant, now(), source_mode, notes),
+    )
+    run_id = cur.lastrowid
+    con.commit(); con.close()
+    return run_id
+
+def save_offers(run_id: int, offers: list[Offer]):
+    con = connect()
+    for o in offers:
+        captured_at = o.captured_at or now()
+        con.execute("""
+        INSERT INTO offers(
+            run_id, merchant, source_url, name, merchant_reference,
+            manufacturer_reference, ean, brand, category, variant,
+            packaging, price_eur, availability, image_url, captured_at
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (
+            run_id, o.merchant, o.source_url, o.name, o.merchant_reference,
+            o.manufacturer_reference, o.ean, o.brand, o.category, o.variant,
+            o.packaging, o.price_eur, o.availability, o.image_url, captured_at
+        ))
+    con.commit(); con.close()
+
+def finish_run(run_id: int):
+    con = connect()
+    count = con.execute("SELECT COUNT(*) c FROM offers WHERE run_id=?", (run_id,)).fetchone()["c"]
+    con.execute(
+        "UPDATE snapshot_runs SET finished_at=?, item_count=? WHERE id=?",
+        (now(), count, run_id)
+    )
+    con.commit(); con.close()
+    return count
+
+def latest_run_id(merchant: str) -> Optional[int]:
+    con = connect()
+    row = con.execute("""
+        SELECT id FROM snapshot_runs
+        WHERE merchant=? AND finished_at IS NOT NULL
+        ORDER BY finished_at DESC, id DESC LIMIT 1
+    """, (merchant,)).fetchone()
+    con.close()
+    return row["id"] if row else None
+
+def latest_offers(merchant: str) -> list[dict]:
+    run_id = latest_run_id(merchant)
+    if run_id is None:
+        return []
+    con = connect()
+    rows = con.execute("SELECT * FROM offers WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+import json, re
+from pathlib import Path
+from core import connect, init_db
+
+HERE = Path(__file__).resolve().parent
+OUT_JSON = HERE / "data" / "latest_offers.json"
+OUT_JS = HERE.parents[1] / "site" / "catalog-data.js"
+
+def norm_ref(s):
+    return re.sub(r"[^A-Z0-9]", "", (s or "").upper())
+
+def main():
+    init_db()
+    con = connect()
+    merchants = [r["merchant"] for r in con.execute(
+        "SELECT DISTINCT merchant FROM snapshot_runs WHERE finished_at IS NOT NULL"
+    ).fetchall()]
+    all_offers=[]
+    for m in merchants:
+        row = con.execute("""
+            SELECT id FROM snapshot_runs WHERE merchant=? AND finished_at IS NOT NULL
+            ORDER BY finished_at DESC,id DESC LIMIT 1
+        """,(m,)).fetchone()
+        if row:
+            all_offers += [dict(r) for r in con.execute(
+                "SELECT * FROM offers WHERE run_id=?",(row["id"],)
+            ).fetchall()]
+    con.close()
+
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(json.dumps(all_offers, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Canonicalisation conservative :
+    # 1) EAN ; 2) référence fabricant ; sinon référence marchand séparée.
+    groups={}
+    for o in all_offers:
+        if o.get("ean"):
+            key=("ean", norm_ref(o["ean"]))
+        elif o.get("manufacturer_reference"):
+            key=("mref", norm_ref(o["manufacturer_reference"]))
+        else:
+            key=("merchant", o["merchant"], norm_ref(o.get("merchant_reference")))
+        groups.setdefault(key, []).append(o)
+
+    categories = {
+        "catalogue": {
+            "title": "Catalogue",
+            "sub": "Produits issus des derniers snapshots fournisseurs",
+            "products": []
+        }
+    }
+
+    for _, offers in groups.items():
+        first=offers[0]
+        prices=[]
+        for o in offers:
+            if o.get("price_eur") is None:
+                continue
+            prices.append({
+                "merchant": o["merchant"],
+                "value": o["price_eur"],
+                "url": o.get("source_url"),
+                "availability": o.get("availability"),
+                "merchantReference": o.get("merchant_reference"),
+                "manufacturerReference": o.get("manufacturer_reference"),
+                "capturedAt": o.get("captured_at"),
+            })
+        if not prices:
+            continue
+        categories["catalogue"]["products"].append({
+            "name": first.get("name") or "Produit",
+            "sub": first.get("variant") or first.get("packaging") or first.get("brand") or "",
+            "tag": first.get("category") or first.get("brand") or "Catalogue",
+            "manufacturerReference": first.get("manufacturer_reference"),
+            "ean": first.get("ean"),
+            "image": first.get("image_url"),
+            "prices": prices,
+        })
+
+    OUT_JS.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JS.write_text(
+        "window.DENTALCOMPARE_CATEGORIES = " +
+        json.dumps(categories, ensure_ascii=False, indent=2) +
+        ";\n",
+        encoding="utf-8"
+    )
+    print(f"{len(all_offers)} offres -> {OUT_JSON}")
+    print(f"{sum(len(v['products']) for v in categories.values())} produits canoniques -> {OUT_JS}")
+
+if __name__ == "__main__":
+    main()
+
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+import argparse, sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+def main():
+    ap = argparse.ArgumentParser(description="DentalCompare - snapshot catalogue")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("import-gacd", help="Importer des captures navigateur GACD")
+    p.add_argument("path")
+
+    p = sub.add_parser("export", help="Exporter le dernier état vers le frontend")
+
+    args = ap.parse_args()
+
+    if args.cmd == "import-gacd":
+        from adapters.gacd_import import main as gacd_main
+        sys.argv = ["gacd_import.py", args.path]
+        gacd_main()
+    elif args.cmd == "export":
+        from export_frontend import main as export_main
+        export_main()
+
+if __name__ == "__main__":
+    main()
