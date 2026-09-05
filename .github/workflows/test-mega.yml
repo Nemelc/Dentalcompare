@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/test-mega.yml'
       - 'backend/mega_dental.py'
+      - 'backend/mega_dental_diagnostic.py'
       - 'backend/base.py'
       - 'backend/run.py'
 
@@ -25,6 +26,9 @@ jobs:
       - name: Installer les dependances
         working-directory: backend
         run: pip install -r requirements.txt
+      - name: Diagnostic acces Mega Dental
+        working-directory: backend
+        run: python mega_dental_diagnostic.py
       - name: Tester Mega Dental sur 20 pages
         working-directory: backend
         run: python run.py scrape --merchant mega --limit 20
