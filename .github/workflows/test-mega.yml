@@ -1,0 +1,33 @@
+name: Test Mega Dental snapshot
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-mega.yml'
+      - 'backend/mega_dental.py'
+      - 'backend/base.py'
+      - 'backend/run.py'
+
+permissions:
+  contents: read
+
+jobs:
+  test-mega:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Installer les dependances
+        working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Tester Mega Dental sur 20 pages
+        working-directory: backend
+        run: python run.py scrape --merchant mega --limit 20
+      - name: Export de controle
+        working-directory: backend
+        run: python run.py export
