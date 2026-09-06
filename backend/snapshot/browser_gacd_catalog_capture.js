@@ -37,8 +37,13 @@
     if ([403,429].includes(res.status)) throw new Error('PROTECTION_HTTP_'+res.status);
     if (!res.ok) throw new Error('HTTP_'+res.status);
     const html = await res.text();
-    if (/captcha|cf-chl|cloudflare|access denied|verify you are human/i.test(html)) throw new Error('PROTECTION_CHALLENGE');
-    return new DOMParser().parseFromString(html,'text/html');
+    const doc = new DOMParser().parseFromString(html,'text/html');
+    const title = clean(doc.title || '');
+    const bodyText = clean(doc.body?.innerText || '').slice(0,3000);
+    const challengeTitle = /just a moment|attention required|access denied|verify you are human|security check/i.test(title);
+    const challengeBody = /verify you are human|checking your browser|enable javascript and cookies to continue|attention required/i.test(bodyText);
+    if (challengeTitle || challengeBody) throw new Error('PROTECTION_CHALLENGE');
+    return doc;
   }
 
   function categorySeeds(doc){
