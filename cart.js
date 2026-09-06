@@ -72,4 +72,18 @@ function updateCartBadge(){
   badge.style.display = count > 0 ? 'flex' : 'none';
 }
 
-document.addEventListener('DOMContentLoaded', updateCartBadge);
+function loadMegaComparatorIntegration(){
+  const isComparator = /(^|\/)dental-comparator\.html$/i.test(window.location.pathname) || document.getElementById('grid');
+  if(!isComparator) return;
+  if(document.querySelector('script[data-mega-integration]')) return;
+  const script = document.createElement('script');
+  script.src = 'mega-integration.js';
+  script.dataset.megaIntegration = '1';
+  script.async = true;
+  document.body.appendChild(script);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  updateCartBadge();
+  loadMegaComparatorIntegration();
+});
