@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DentalCompare — Test catalogue Mega Dental</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAF6F2;--card:#fff;--ink:#2B2119;--soft:#6E5E4F;--line:#EAE1D6;--orange:#F4600C;--orange2:#D4530A;--orange-soft:#FCDCC0;--blue:#1B7A93;--blue-soft:#D9EDF2;--radius:10px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif}header{background:var(--orange);border-bottom:3px solid var(--orange2);color:white;padding:16px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}.brand{font-family:'Space Grotesk';font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px}.mark{width:31px;height:31px;border-radius:8px;background:white;color:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:800}.test-badge{font-family:'IBM Plex Mono';font-size:10px;border:1px solid rgba(255,255,255,.5);padding:4px 8px;border-radius:20px}.wrap{max-width:1450px;margin:auto;padding:24px}.intro{background:white;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}.intro h1{font-family:'Space Grotesk';font-size:24px;margin:0 0 5px}.intro p{margin:0;color:var(--soft);font-size:13px}.filebtn{display:inline-block;background:var(--orange);color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}.filebtn input{display:none}.stats{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;margin-bottom:18px}.stat{background:white;border:1px solid var(--line);border-radius:10px;padding:13px}.stat strong{font-family:'Space Grotesk';font-size:21px;display:block}.stat span{font-size:11px;color:var(--soft)}.toolbar{background:white;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;position:sticky;top:0;z-index:20}.toolbar input,.toolbar select{border:1px solid var(--line);border-radius:7px;padding:9px 10px;background:#fff;font-family:inherit;color:var(--ink)}.toolbar input{flex:1;min-width:250px}.count{font-family:'IBM Plex Mono';font-size:11px;color:var(--soft);align-self:center;margin-left:auto}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:16px}.card{background:white;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;min-height:410px}.photo{height:170px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:12px}.photo img{max-width:100%;max-height:100%;object-fit:contain}.noimg{color:#9C8975;font-family:'IBM Plex Mono';font-size:11px}.body{padding:15px;display:flex;flex-direction:column;gap:8px;flex:1}.tag{display:inline-block;align-self:flex-start;background:var(--orange-soft);color:var(--orange);font-family:'IBM Plex Mono';font-size:9.5px;padding:3px 7px;border-radius:4px;text-transform:uppercase}.name{font-family:'Space Grotesk';font-weight:600;font-size:16px;line-height:1.25}.meta{font-size:11.5px;color:var(--soft);line-height:1.45}.refs{font-family:'IBM Plex Mono';font-size:10px;color:var(--soft);background:var(--bg);border-radius:6px;padding:7px}.price{font-family:'Space Grotesk';font-size:28px;font-weight:700;color:var(--orange);margin-top:auto}.stock{font-size:11px;color:var(--blue);font-weight:600}.actions{display:flex;gap:8px;margin-top:4px}.actions a{flex:1;text-align:center;text-decoration:none;padding:8px;border-radius:7px;font-size:12px;font-weight:700}.merchant{background:var(--orange);color:white}.detail{border:1px solid var(--line);color:var(--ink)}.flags{display:flex;gap:4px;flex-wrap:wrap}.flag{font-family:'IBM Plex Mono';font-size:8.5px;padding:3px 5px;border-radius:4px;background:#F4EEE8;color:#7A6856}.empty{grid-column:1/-1;background:white;border:1px dashed var(--line);padding:50px;text-align:center;color:var(--soft);border-radius:10px}.pager{display:flex;justify-content:center;gap:8px;margin:22px 0}.pager button{border:1px solid var(--line);background:white;border-radius:7px;padding:8px 12px;cursor:pointer}.pager button:disabled{opacity:.35;cursor:default}@media(max-width:760px){.wrap{padding:14px}.stats{grid-template-columns:repeat(2,1fr)}header{padding:14px}.toolbar{position:static}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="mark">D</div>DentalCompare</div><div class="test-badge">TEST LOCAL — MEGA DENTAL</div></header>
+<div class="wrap">
+  <div class="intro">
+    <div><h1>Catalogue Mega Dental — contrôle visuel</h1><p>Cette page ne modifie pas le site public. Charge le fichier préparé puis vérifie photos, prix, catégories, références et liens.</p></div>
+    <label class="filebtn">Choisir mega_catalog_test.json<input id="file" type="file" accept="application/json,.json"></label>
+  </div>
+  <div class="stats">
+    <div class="stat"><strong id="sTotal">—</strong><span>produits</span></div>
+    <div class="stat"><strong id="sPrice">—</strong><span>avec prix</span></div>
+    <div class="stat"><strong id="sImage">—</strong><span>avec image</span></div>
+    <div class="stat"><strong id="sMref">—</strong><span>réf. fabricant</span></div>
+    <div class="stat"><strong id="sEan">—</strong><span>EAN</span></div>
+  </div>
+  <div class="toolbar">
+    <input id="search" placeholder="Rechercher produit, marque, référence..." disabled>
+    <select id="cat" disabled><option value="">Toutes les catégories</option></select>
+    <select id="quality" disabled><option value="">Tous les produits</option><option value="with_price">Avec prix</option><option value="with_image">Avec image</option><option value="review">À contrôler</option></select>
+    <span class="count" id="count">Charge d’abord le fichier</span>
+  </div>
+  <div id="grid" class="grid"><div class="empty">Aucun catalogue chargé.</div></div>
+  <div class="pager"><button id="prev" disabled>← Précédent</button><button id="next" disabled>Suivant →</button></div>
+</div>
+<script>
+let products=[], filtered=[], page=0; const PAGE_SIZE=60;
+const $=id=>document.getElementById(id);
+const money=v=>v==null?'Prix non récupéré':new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(v);
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function imageHtml(p){return p.image_url?`<img loading="lazy" src="${esc(p.image_url)}" alt="${esc(p.name)}" onerror="this.outerHTML='<div class=noimg>Image indisponible</div>'">`:'<div class="noimg">Pas d’image</div>'}
+function loadStats(){ $('sTotal').textContent=products.length.toLocaleString('fr-FR'); $('sPrice').textContent=products.filter(p=>p.price_eur!=null).length.toLocaleString('fr-FR'); $('sImage').textContent=products.filter(p=>p.image_url).length.toLocaleString('fr-FR'); $('sMref').textContent=products.filter(p=>p.manufacturer_reference).length.toLocaleString('fr-FR'); $('sEan').textContent=products.filter(p=>p.ean).length.toLocaleString('fr-FR'); }
+function buildCategories(){let cats=[...new Set(products.map(p=>p.dental_category||'Autres'))].sort((a,b)=>a.localeCompare(b,'fr')); $('cat').innerHTML='<option value="">Toutes les catégories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('')}
+function apply(){let q=$('search').value.trim().toLowerCase(), cat=$('cat').value, quality=$('quality').value; filtered=products.filter(p=>{let hay=[p.name,p.brand,p.merchant_reference,p.manufacturer_reference,p.ean,p.category].join(' ').toLowerCase(); if(q&&!hay.includes(q))return false;if(cat&&(p.dental_category||'Autres')!==cat)return false;if(quality==='with_price'&&p.price_eur==null)return false;if(quality==='with_image'&&!p.image_url)return false;if(quality==='review'&&!(p.qc_flags||[]).length)return false;return true});page=0;render()}
+function render(){let start=page*PAGE_SIZE, rows=filtered.slice(start,start+PAGE_SIZE); $('count').textContent=`${filtered.length.toLocaleString('fr-FR')} résultat(s) — page ${filtered.length? page+1:0}/${Math.max(1,Math.ceil(filtered.length/PAGE_SIZE))}`;$('prev').disabled=page===0;$('next').disabled=start+PAGE_SIZE>=filtered.length;if(!rows.length){$('grid').innerHTML='<div class="empty">Aucun produit ne correspond aux filtres.</div>';return}$('grid').innerHTML=rows.map(p=>`<article class="card"><div class="photo">${imageHtml(p)}</div><div class="body"><span class="tag">${esc(p.dental_category||'Autres')}</span><div class="name">${esc(p.name||'Produit sans nom')}</div><div class="meta"><strong>${esc(p.brand||'Marque inconnue')}</strong><br>${esc(p.category||'Catégorie non renseignée')}</div><div class="refs">Mega: ${esc(p.merchant_reference||'—')}<br>Fabricant: ${esc(p.manufacturer_reference||'—')}<br>EAN: ${esc(p.ean||'—')}</div>${(p.qc_flags||[]).length?`<div class="flags">${p.qc_flags.slice(0,4).map(f=>`<span class="flag">${esc(f)}</span>`).join('')}</div>`:''}<div class="price">${money(p.price_eur)}</div><div class="stock">${esc(p.availability||'Disponibilité inconnue')}</div><div class="actions"><a class="merchant" target="_blank" rel="noopener" href="${esc(p.source_url||'#')}">Voir chez Mega</a></div></div></article>`).join('')}
+$('file').addEventListener('change',async e=>{let f=e.target.files[0];if(!f)return;try{let data=JSON.parse(await f.text());products=Array.isArray(data)?data:(data.products||[]);loadStats();buildCategories();$('search').disabled=$('cat').disabled=$('quality').disabled=false;filtered=products;page=0;render()}catch(err){alert('Impossible de lire le fichier JSON : '+err.message)}});
+['search','cat','quality'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',apply));$('prev').onclick=()=>{if(page>0){page--;render();scrollTo({top:0,behavior:'smooth'})}};$('next').onclick=()=>{if((page+1)*PAGE_SIZE<filtered.length){page++;render();scrollTo({top:0,behavior:'smooth'})}};
+</script>
+</body>
+</html>
