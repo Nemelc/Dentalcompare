@@ -1,0 +1,45 @@
+name: DFC Instruments catalogue
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/snapshot/dfc_catalog.py'
+      - '.github/workflows/dfc-catalogue.yml'
+  schedule:
+    - cron: '10 5 * * 1'
+permissions:
+  contents: write
+concurrency:
+  group: dfc-catalogue
+  cancel-in-progress: false
+jobs:
+  refresh-dfc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Recuperer le catalogue public DFC Instruments
+        run: python backend/snapshot/dfc_catalog.py --workers 6 --output backend/snapshot/data/dfc_catalog.json
+      - name: Controle qualite
+        run: |
+          python - <<'PY'
+          import json
+          p='backend/snapshot/data/dfc_catalog.json'
+          d=json.load(open(p,encoding='utf-8')); rows=d.get('products',[])
+          good=[x for x in rows if x.get('name') and x.get('merchant_reference') and isinstance(x.get('price_eur'),(int,float)) and x['price_eur']>0 and x.get('image_url')]
+          print('Total:',len(rows),'Qualite:',len(good),'Erreurs:',len(d.get('errors',[])))
+          if len(good)<20: raise SystemExit('Catalogue DFC insuffisant')
+          PY
+      - name: Enregistrer le catalogue
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/snapshot/data/dfc_catalog.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Refresh DFC Instruments catalogue'
+          git pull --rebase origin main
+          git push origin main
