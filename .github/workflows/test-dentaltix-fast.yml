@@ -1,0 +1,38 @@
+name: Test Dentaltix fast collector
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/snapshot/dentaltix_catalog.py'
+      - '.github/workflows/test-dentaltix-fast.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-dentaltix-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Tester Dentaltix
+        run: |
+          python backend/snapshot/dentaltix_catalog.py --workers 8 --discover-workers 8 --max-pages 12 --limit 12 --output /tmp/dentaltix_test.json --urls-out /tmp/dentaltix_urls.json
+      - name: Résumé
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/dentaltix_test.json'))
+          print('URLs:',d['product_pages_discovered'])
+          print('Références:',d['total_products'])
+          print('Erreurs:',len(d['errors']))
+          print('Avec prix:',sum(isinstance(x.get('price'),(int,float)) and x['price']>0 for x in d['products']))
+          print('Avec image:',sum(bool(x.get('image_url')) for x in d['products']))
+          print('Avec référence:',sum(bool(x.get('merchant_reference')) for x in d['products']))
+          PY
