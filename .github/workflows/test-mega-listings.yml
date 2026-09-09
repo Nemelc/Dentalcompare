@@ -1,0 +1,38 @@
+name: Test Mega listing refresh
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/snapshot/mega_listing_probe.py'
+      - '.github/workflows/test-mega-listings.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-mega-listings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Tester les pages catalogue Mega
+        run: python backend/snapshot/mega_listing_probe.py
+      - name: Résumé
+        if: always()
+        run: |
+          if [ -f /tmp/mega_listing_probe.json ]; then
+            python - <<'PY'
+          import json
+          d=json.load(open('/tmp/mega_listing_probe.json'))
+          print('Offres:',len(d['offers']))
+          print('Avec référence:',d['with_ref'])
+          print('Avec prix:',d['with_price'])
+          print('Erreurs:',len(d['errors']))
+          PY
+          fi
