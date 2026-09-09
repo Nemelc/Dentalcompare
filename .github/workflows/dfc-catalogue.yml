@@ -21,7 +21,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -r requirements.txt
+      - working-directory: backend
+        run: pip install -r requirements.txt
       - name: Recuperer le catalogue public DFC Instruments
         run: python backend/snapshot/dfc_catalog.py --workers 6 --output backend/snapshot/data/dfc_catalog.json
       - name: Controle qualite
