@@ -7,6 +7,11 @@ CANDIDATES=[
  'https://dentalclick.com/',
  'https://www.dentalclick.fr/',
  'https://dentalclick.fr/',
+ 'https://www.dentalclick.fr/robots.txt',
+ 'https://www.dentalclick.fr/sitemap.xml',
+ 'https://www.dentalclick.fr/sitemap_index.xml',
+ 'https://www.dentalclick.com/robots.txt',
+ 'https://www.dentalclick.com/sitemap.xml',
 ]
 UA='Mozilla/5.0 (compatible; DentalCompareCatalog/1.0; public catalogue probe)'
 
@@ -18,12 +23,13 @@ def main():
         try:
             r=s.get(u,timeout=20,allow_redirects=True)
             rec.update(status=r.status_code,final_url=r.url,length=len(r.text or ''))
-            txt=(r.text or '')[:200000]
+            txt=(r.text or '')[:300000]
             low=txt.lower()
-            rec['challenge']=any(x in low for x in ('captcha','cloudflare','verify you are human','access denied'))
+            rec['challenge']=any(x in low for x in ('captcha','cloudflare','verify you are human','access denied','human verification'))
             soup=BeautifulSoup(txt,'lxml')
             rec['title']=(soup.title.get_text(' ',strip=True) if soup.title else '')[:200]
-            rec['links']=[a.get('href') for a in soup.find_all('a',href=True)[:50]]
+            rec['sample']=txt[:500].replace('\n',' ')
+            rec['links']=[a.get('href') for a in soup.find_all('a',href=True)[:30]]
         except Exception as e:
             rec['error']=repr(e)
         out.append(rec)
