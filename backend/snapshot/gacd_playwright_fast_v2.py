@@ -60,24 +60,22 @@ class Store:
     def __init__(self):
         DATA.mkdir(parents=True,exist_ok=True)
         self.db=sqlite3.connect(DB)
-        self.db.execute('CREATE TABLE IF NOT EXISTS queue(url TEXT PRIMARY KEY,kind TEXT,status TEXT DEFAULT "pending")')
+        self.db.execute('CREATE TABLE IF NOT EXISTS queue(url TEXT,kind TEXT,status TEXT DEFAULT "pending",PRIMARY KEY(url,kind))')
         self.db.execute('CREATE TABLE IF NOT EXISTS products(ref TEXT PRIMARY KEY,url TEXT,mfr TEXT,name TEXT,brand TEXT,category TEXT,price REAL,availability TEXT,image TEXT,captured TEXT)')
         self.db.commit()
     def reset(self):
-        self.db.execute('DELETE FROM queue');self.db.execute('DELETE FROM products');self.db.commit()
+        # Recrée la file pour migrer automatiquement les anciennes bases où
+        # URL seule était la clé primaire. Une URL peut légitimement être à la
+        # fois une page de navigation et une candidate produit.
+        self.db.execute('DROP TABLE IF EXISTS queue')
+        self.db.execute('CREATE TABLE queue(url TEXT,kind TEXT,status TEXT DEFAULT "pending",PRIMARY KEY(url,kind))')
+        self.db.execute('DELETE FROM products');self.db.commit()
     def add(self,urls,kind):
         rows=[(u,kind) for u in urls if u]
-        # Une même URL est souvent découverte d'abord via le plan du site comme
-        # listing, puis reconnue comme produit. L'ancien INSERT OR IGNORE
-        # conservait alors le mauvais type et la fiche n'était jamais extraite.
-        self.db.executemany('''INSERT INTO queue(url,kind) VALUES(?,?)
-        ON CONFLICT(url) DO UPDATE SET
-          kind='product',
-          status=CASE WHEN queue.kind='product' THEN queue.status ELSE 'pending' END
-        WHERE excluded.kind='product' AND queue.kind!='product' ''',rows);self.db.commit()
+        self.db.executemany('INSERT OR IGNORE INTO queue(url,kind) VALUES(?,?)',rows);self.db.commit()
     def next(self,kind):
         r=self.db.execute('SELECT url FROM queue WHERE kind=? AND status="pending" ORDER BY rowid LIMIT 1',(kind,)).fetchone();return r[0] if r else None
-    def done(self,u):self.db.execute('UPDATE queue SET status="done" WHERE url=?',(u,));self.db.commit()
+    def done(self,u,kind):self.db.execute('UPDATE queue SET status="done" WHERE url=? AND kind=?',(u,kind));self.db.commit()
     def save(self,rows):
         self.db.executemany('''INSERT INTO products VALUES(?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(ref) DO UPDATE SET url=excluded.url,mfr=COALESCE(excluded.mfr,products.mfr),name=excluded.name,brand=COALESCE(excluded.brand,products.brand),category=COALESCE(excluded.category,products.category),price=COALESCE(excluded.price,products.price),availability=COALESCE(excluded.availability,products.availability),image=COALESCE(excluded.image,products.image),captured=excluded.captured''',rows);self.db.commit()
@@ -218,7 +216,7 @@ async def main():
                 if (r and r.status in (403,429)) or await is_challenge(page):print('[GACD V2] Protection détectée. Arrêt propre.',flush=True);break
                 body=await get_body(page)
                 if PRODUCT_MARKER.search(body) or await page_skus(page):
-                    s.done(u);s.add({u},'product');continue
+                    s.done(u,'listing');s.add({u},'product');continue
                 pls=await hrefs(page,PRODUCT_SELECTORS);s.add(pls,'product')
                 cats=await hrefs(page,CATEGORY_SELECTORS)
                 # Les menus/plan du site de GACD utilisent souvent des liens
@@ -234,12 +232,9 @@ async def main():
                         s.add({x for x in normalized if html_candidate(x)},'product')
                         s.add({x for x in normalized if likely_category(x)},'listing')
                     except:pass
-                # Si les liens de cette page ont permis de la promouvoir en
-                # produit, elle doit rester pending pour la phase d'extraction.
-                current=s.db.execute('SELECT kind FROM queue WHERE url=?',(u,)).fetchone()
-                if not current or current[0]!='product':s.done(u)
+                s.done(u,'listing')
             except Exception as e:
-                print(f'[GACD V2] Erreur découverte {type(e).__name__}: {u}',flush=True);s.done(u)
+                print(f'[GACD V2] Erreur découverte {type(e).__name__}: {u}',flush=True);s.done(u,'listing')
             await asyncio.sleep(.2)
         q,_=s.counts(); total_products=len(s.db.execute('SELECT url FROM queue WHERE kind="product"').fetchall())
         print(f'[GACD V2] Découverte terminée: {total_products} fiches produit uniques.',flush=True)
@@ -254,7 +249,7 @@ async def main():
                 body=await get_body(page);rows=await parse_product(page,u,body)
                 if rows:s.save(rows);print(f'[GACD V2] +{len(rows)} référence(s)',flush=True)
                 else:print('[GACD V2] 0 référence sur cette page',flush=True)
-                s.done(u)
+                s.done(u,'product')
             except Exception as e:print(f'[GACD V2] Erreur produit {type(e).__name__}: {u}',flush=True)
             if i%25==0:s.export()
             await asyncio.sleep(.3)
