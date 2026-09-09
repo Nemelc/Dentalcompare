@@ -18,7 +18,9 @@
   const mfr=v=>{const x=ref(v);return x.length>=4&&!['NONE','NULL','REFERENCE','PRODUIT','DENTALTIX'].includes(x)?x:'';};
   const money=v=>Number(v).toFixed(2).replace('.',',')+' €';
   const intersect=(a,b)=>{let n=0;a.forEach(x=>{if(b.has(x))n++;});return n;};
-  function similarity(a,b){const x=tokens(a),y=tokens(b);return x.size&&y.size?intersect(x,y)/Math.max(x.size,y.size):0;}
+  // Matching volontairement permissif : un libellé court entièrement contenu
+  // dans un libellé marchand plus détaillé doit être regroupé.
+  function similarity(a,b){const x=tokens(a),y=tokens(b);return x.size&&y.size?intersect(x,y)/Math.min(x.size,y.size):0;}
   function variantsCompatible(a,b){const x=variants(a),y=variants(b);return !x.size||!y.size||intersect(x,y)>0;}
   function baseCategory(raw,name){
     const s=fold((raw||'')+' '+(name||''));
@@ -43,7 +45,7 @@
     function index(g){
       const e=ean(g.ean);if(e)byEan.set(e,g);
       const r=mfr(g.manufacturerReference);if(r){const a=byMfr.get(r)||[];if(!a.includes(g))a.push(g);byMfr.set(r,a);}
-      tokens(g.name).forEach(t=>{if(t.length<4)return;const a=byToken.get(t)||[];if(a.length<250&&!a.includes(g))a.push(g);byToken.set(t,a);});
+      tokens(g.name).forEach(t=>{if(t.length<3)return;const a=byToken.get(t)||[];if(a.length<500&&!a.includes(g))a.push(g);byToken.set(t,a);});
     }
     offers.forEach(o=>{
       let g=null;const e=ean(o.ean),r=mfr(o.manufacturerReference),b=normBrand(o.brand);
@@ -52,8 +54,8 @@
       if(!g){
         const counts=new Map();tokens(o.name).forEach(t=>(byToken.get(t)||[]).forEach(x=>counts.set(x,(counts.get(x)||0)+1)));
         let best=null,bestScore=0;
-        counts.forEach((_,x)=>{if(!accepts(x,o))return;const xb=normBrand(x.brand);if(b&&xb&&b!==xb)return;if(!variantsCompatible(o.name+' '+o.variant+' '+o.packaging,x.name+' '+x.offers[0].variant+' '+x.offers[0].packaging))return;const s=similarity(o.name,x.name);if(s>bestScore){best=x;bestScore=s;}});
-        if(bestScore>=0.82)g=best;
+        counts.forEach((_,x)=>{if(!accepts(x,o))return;const s=similarity(o.name,x.name);if(s>bestScore){best=x;bestScore=s;}});
+        if(bestScore>=0.58)g=best;
       }
       if(!g){g=makeGroup(o,'p'+(groups.length+1));groups.push(g);index(g);}
       else if(!g.offers.some(x=>x.merchant===o.merchant&&ref(x.merchantReference)===ref(o.merchantReference))){g.offers.push(o);if(!g.image)g.image=o.image;index(g);}
