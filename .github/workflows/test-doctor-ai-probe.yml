@@ -1,0 +1,22 @@
+name: Test Doctor AI public catalogue
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/snapshot/doctor_ai_probe.py'
+      - '.github/workflows/test-doctor-ai-probe.yml'
+permissions:
+  contents: read
+jobs:
+  probe-doctor-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Tester le catalogue public Doctor AI
+        run: python backend/snapshot/doctor_ai_probe.py
