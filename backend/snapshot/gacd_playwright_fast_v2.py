@@ -14,7 +14,10 @@ BASE='https://www.gacd.fr/'
 ORIGIN='https://www.gacd.fr'
 DATA=Path(__file__).parent/'data'
 DB=DATA/'gacd_playwright_fast_v2.sqlite3'
-PRODUCT_MARKER=re.compile(r'(?:Réf\.?|Référence)\s*GACD\s*:',re.I)
+# Le libellé varie selon les gabarits GACD (avec/sans point et avec/sans
+# deux-points). Exiger « : » faisait passer la quasi-totalité des fiches pour
+# des catégories pendant la découverte.
+PRODUCT_MARKER=re.compile(r'(?:Réf(?:érence)?\.?)\s*GACD\s*:?',re.I)
 CHALLENGE=re.compile(r'captcha|verify you are human|vérifiez que vous êtes humain|access denied|security check|checking your browser|just a moment',re.I)
 SKIP=re.compile(r'/(customer|checkout|cart|catalogsearch|search|contact|mentions|conditions|privacy|cookies|newsletter|login|account|wishlist)(/|$)',re.I)
 PRODUCT_SELECTORS=(
@@ -64,7 +67,14 @@ class Store:
         self.db.execute('DELETE FROM queue');self.db.execute('DELETE FROM products');self.db.commit()
     def add(self,urls,kind):
         rows=[(u,kind) for u in urls if u]
-        self.db.executemany('INSERT OR IGNORE INTO queue(url,kind) VALUES(?,?)',rows);self.db.commit()
+        # Une même URL est souvent découverte d'abord via le plan du site comme
+        # listing, puis reconnue comme produit. L'ancien INSERT OR IGNORE
+        # conservait alors le mauvais type et la fiche n'était jamais extraite.
+        self.db.executemany('''INSERT INTO queue(url,kind) VALUES(?,?)
+        ON CONFLICT(url) DO UPDATE SET
+          kind='product',
+          status=CASE WHEN queue.kind='product' THEN queue.status ELSE 'pending' END
+        WHERE excluded.kind='product' AND queue.kind!='product' ''',rows);self.db.commit()
     def next(self,kind):
         r=self.db.execute('SELECT url FROM queue WHERE kind=? AND status="pending" ORDER BY rowid LIMIT 1',(kind,)).fetchone();return r[0] if r else None
     def done(self,u):self.db.execute('UPDATE queue SET status="done" WHERE url=?',(u,));self.db.commit()
@@ -104,14 +114,46 @@ def likely_category(u):
     if p.query and not re.search(r'(^|&)(p|page)=\d+',p.query):return False
     return path.endswith('.html') or path.endswith('/') or ('?p=' in u or '?page=' in u)
 
+def html_candidate(u):
+    """Une URL .html peut être une fiche ou une catégorie Magento.
+
+    On la garde comme candidate produit et comme page de découverte. Le second
+    passage rejettera proprement les catégories dépourvues de SKU.
+    """
+    p=urlparse(u)
+    return p.path.lower().endswith('.html') and not SKIP.search(p.path)
+
 async def get_body(page):
     try:
         await page.wait_for_timeout(650)
         return await page.locator('body').inner_text(timeout=10000)
     except:return ''
 
+async def page_skus(page):
+    """Récupère les SKU exposés par Magento quand le libellé texte est absent."""
+    selectors=(
+        "meta[itemprop='sku']",
+        "[itemprop='sku']",
+        "[data-product-sku]",
+        ".product.attribute.sku .value",
+        ".product-info-main .sku .value",
+    )
+    found=[]
+    for sel in selectors:
+        try:
+            values=await page.locator(sel).evaluate_all("""els => els.flatMap(e => [
+                e.getAttribute('content'), e.getAttribute('data-product-sku'),
+                e.textContent
+            ]).filter(Boolean)""")
+            for value in values:
+                ref=valid_ref(value)
+                if ref and ref not in found:found.append(ref)
+        except:pass
+    return found
+
 async def parse_product(page,url,body):
-    if not PRODUCT_MARKER.search(body):return []
+    fallback_skus=await page_skus(page)
+    if not PRODUCT_MARKER.search(body) and not fallback_skus:return []
     try:h1=clean(await page.locator('h1').first.inner_text(timeout=2000))
     except:h1='Produit GACD'
     image=None
@@ -152,6 +194,12 @@ async def parse_product(page,url,body):
             if re.match(r'^(En stock|Sur commande|En réapprovisionnement|Indisponible|Arrêté|Rupture|Ajouter|Prix|Qté|Quantité|[0-9\s,.]+\s*€)',line,re.I):continue
             if len(line)>3:name=line;break
         rows.append((ref,url,mfr,name,brand,category,parse_price(seg),av,image,now()))
+    # Certaines fiches simples n'affichent plus « Réf. GACD » dans le texte,
+    # mais publient bien leur SKU dans les attributs Magento.
+    for ref in fallback_skus:
+        if ref in seen:continue
+        seen.add(ref)
+        rows.append((ref,url,None,h1,brand,category,parse_price(body),None,image,now()))
     return rows
 
 async def main():
@@ -169,19 +217,27 @@ async def main():
                 r=await page.goto(u,wait_until='domcontentloaded',timeout=25000)
                 if (r and r.status in (403,429)) or await is_challenge(page):print('[GACD V2] Protection détectée. Arrêt propre.',flush=True);break
                 body=await get_body(page)
-                if PRODUCT_MARKER.search(body):
-                    s.add({u},'product');s.done(u);continue
+                if PRODUCT_MARKER.search(body) or await page_skus(page):
+                    s.done(u);s.add({u},'product');continue
                 pls=await hrefs(page,PRODUCT_SELECTORS);s.add(pls,'product')
                 cats=await hrefs(page,CATEGORY_SELECTORS)
+                # Les menus/plan du site de GACD utilisent souvent des liens
+                # produit ordinaires, sans classe product-item-link.
+                s.add({x for x in cats if html_candidate(x)},'product')
                 # On ajoute les catégories/paginations uniquement, jamais les liens produit génériques.
                 s.add({x for x in cats if x not in pls and likely_category(x)},'listing')
                 # Le plan du site contient parfois des catégories hors sélecteurs dédiés.
                 if 'plan-du-site' in u or 'sitemap' in u or u==BASE:
                     try:
                         allh=await page.locator('a[href]').evaluate_all("els=>els.map(e=>e.href).filter(Boolean)")
-                        s.add({normalize(x,u) for x in allh if normalize(x,u) and likely_category(normalize(x,u))},'listing')
+                        normalized={normalize(x,u) for x in allh if normalize(x,u)}
+                        s.add({x for x in normalized if html_candidate(x)},'product')
+                        s.add({x for x in normalized if likely_category(x)},'listing')
                     except:pass
-                s.done(u)
+                # Si les liens de cette page ont permis de la promouvoir en
+                # produit, elle doit rester pending pour la phase d'extraction.
+                current=s.db.execute('SELECT kind FROM queue WHERE url=?',(u,)).fetchone()
+                if not current or current[0]!='product':s.done(u)
             except Exception as e:
                 print(f'[GACD V2] Erreur découverte {type(e).__name__}: {u}',flush=True);s.done(u)
             await asyncio.sleep(.2)
