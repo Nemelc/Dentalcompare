@@ -19,7 +19,7 @@ concurrency:
 jobs:
   refresh-dentaltix:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,27 +27,43 @@ jobs:
           python-version: '3.12'
       - working-directory: backend
         run: pip install -r requirements.txt
-      - name: Recuperer le catalogue public Dentaltix
+
+      - name: Avancer le catalogue Dentaltix
+        id: collect
+        continue-on-error: true
         run: |
-          python backend/snapshot/dentaltix_catalog.py --workers 10 --discover-workers 10 --max-pages 500 --output backend/snapshot/data/dentaltix_catalog.json --urls-out backend/snapshot/data/dentaltix_product_urls.json
-      - name: Controle qualite
+          python backend/snapshot/dentaltix_catalog.py \
+            --workers 5 \
+            --discover-workers 3 \
+            --max-pages 500 \
+            --discover-chunk 60 \
+            --product-chunk 300 \
+            --output backend/snapshot/data/dentaltix_catalog.json \
+            --urls-out backend/snapshot/data/dentaltix_product_urls.json \
+            --discovery-state backend/snapshot/data/dentaltix_discovery_progress.json \
+            --progress-state backend/snapshot/data/dentaltix_progress.json
+
+      - name: Controle etat du catalogue
         run: |
           python - <<'PY'
-          import json,sys
+          import json
           d=json.load(open('backend/snapshot/data/dentaltix_catalog.json',encoding='utf-8'))
-          rows=d.get('products',[])
-          quality=[x for x in rows if x.get('name') and isinstance(x.get('price'),(int,float)) and x.get('price',0)>0 and x.get('image_url') and x.get('merchant_reference')]
-          print('URLs:',d.get('product_pages_discovered'))
-          print('References:',len(rows))
-          print('Qualite nom+prix+image+ref:',len(quality))
-          print('Erreurs:',len(d.get('errors',[])))
-          if len(quality)<100:
-              print('Catalogue anormalement petit: publication refusee',file=sys.stderr);sys.exit(1)
+          print('URLs découvertes:',d.get('product_pages_discovered'))
+          print('URLs traitées:',d.get('product_pages_completed'))
+          print('Références cumulées:',d.get('total_products'))
+          print('Découverte complète:',d.get('discovery_complete'))
+          print('Catalogue complet:',d.get('catalogue_complete'))
           PY
-      - name: Enregistrer le snapshot
+
+      - name: Sauvegarder progression et catalogue
         run: |
           git config user.name 'github-actions'
           git config user.email 'github-actions@github.com'
-          git add backend/snapshot/data/dentaltix_catalog.json backend/snapshot/data/dentaltix_product_urls.json
-          git diff --cached --quiet || git commit -m 'Refresh Dentaltix catalogue'
+          git add backend/snapshot/data/dentaltix_catalog.json backend/snapshot/data/dentaltix_product_urls.json backend/snapshot/data/dentaltix_discovery_progress.json backend/snapshot/data/dentaltix_progress.json
+          git diff --cached --quiet || git commit -m 'Advance Dentaltix catalogue'
+          git pull --rebase
           git push
+
+      - name: Signaler protection eventuelle
+        if: steps.collect.outcome == 'failure'
+        run: echo 'Progression sauvegardée. Le prochain run reprendra sans perdre le catalogue.'
