@@ -1,19 +1,25 @@
-name: Test Dentaltix fast collector
+name: Dentaltix weekly catalogue
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '40 4 * * 1'
   push:
     paths:
       - 'backend/snapshot/dentaltix_catalog.py'
       - '.github/workflows/test-dentaltix-fast.yml'
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: dentaltix-weekly-catalogue
+  cancel-in-progress: false
 
 jobs:
-  test-dentaltix-fast:
+  refresh-dentaltix:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,18 +27,27 @@ jobs:
           python-version: '3.12'
       - working-directory: backend
         run: pip install -r requirements.txt
-      - name: Tester Dentaltix
+      - name: Recuperer le catalogue public Dentaltix
         run: |
-          python backend/snapshot/dentaltix_catalog.py --workers 8 --discover-workers 8 --max-pages 12 --limit 12 --output /tmp/dentaltix_test.json --urls-out /tmp/dentaltix_urls.json
-      - name: Résumé
+          python backend/snapshot/dentaltix_catalog.py --workers 10 --discover-workers 10 --max-pages 500 --output backend/snapshot/data/dentaltix_catalog.json --urls-out backend/snapshot/data/dentaltix_product_urls.json
+      - name: Controle qualite
         run: |
           python - <<'PY'
-          import json
-          d=json.load(open('/tmp/dentaltix_test.json'))
-          print('URLs:',d['product_pages_discovered'])
-          print('Références:',d['total_products'])
-          print('Erreurs:',len(d['errors']))
-          print('Avec prix:',sum(isinstance(x.get('price'),(int,float)) and x['price']>0 for x in d['products']))
-          print('Avec image:',sum(bool(x.get('image_url')) for x in d['products']))
-          print('Avec référence:',sum(bool(x.get('merchant_reference')) for x in d['products']))
+          import json,sys
+          d=json.load(open('backend/snapshot/data/dentaltix_catalog.json',encoding='utf-8'))
+          rows=d.get('products',[])
+          quality=[x for x in rows if x.get('name') and isinstance(x.get('price'),(int,float)) and x.get('price',0)>0 and x.get('image_url') and x.get('merchant_reference')]
+          print('URLs:',d.get('product_pages_discovered'))
+          print('References:',len(rows))
+          print('Qualite nom+prix+image+ref:',len(quality))
+          print('Erreurs:',len(d.get('errors',[])))
+          if len(quality)<100:
+              print('Catalogue anormalement petit: publication refusee',file=sys.stderr);sys.exit(1)
           PY
+      - name: Enregistrer le snapshot
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@github.com'
+          git add backend/snapshot/data/dentaltix_catalog.json backend/snapshot/data/dentaltix_product_urls.json
+          git diff --cached --quiet || git commit -m 'Refresh Dentaltix catalogue'
+          git push
