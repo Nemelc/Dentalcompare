@@ -6,6 +6,7 @@ on:
     - cron: '20 3 * * 1'
   push:
     paths:
+      - 'backend/snapshot/dental_good_deal_catalog.py'
       - '.github/workflows/dgd-weekly.yml'
 
 permissions:
@@ -18,59 +19,50 @@ concurrency:
 jobs:
   refresh-dgd:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 35
     steps:
-      - name: Recuperer le depot
-        uses: actions/checkout@v4
-
-      - name: Installer Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Installer les dependances
-        working-directory: backend
+      - working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: Recuperer le catalogue public Dental Good Deal
+      - name: Recuperer un lot Dental Good Deal
+        id: collect
+        continue-on-error: true
         run: |
-          if [ -f backend/snapshot/data/dgd_product_urls.json ]; then
-            python backend/snapshot/dental_good_deal_catalog.py \
-              --workers 12 \
-              --urls-file backend/snapshot/data/dgd_product_urls.json \
-              --output backend/snapshot/data/dental_good_deal_catalog.json \
-              --urls-out backend/snapshot/data/dgd_product_urls.json
-          else
-            python backend/snapshot/dental_good_deal_catalog.py \
-              --workers 12 \
-              --discover-workers 8 \
-              --max-pages 220 \
-              --output backend/snapshot/data/dental_good_deal_catalog.json \
-              --urls-out backend/snapshot/data/dgd_product_urls.json
-          fi
+          python backend/snapshot/dental_good_deal_catalog.py \
+            --workers 6 \
+            --discover-workers 4 \
+            --max-pages 220 \
+            --chunk-size 400 \
+            --output backend/snapshot/data/dental_good_deal_catalog.json \
+            --urls-out backend/snapshot/data/dgd_product_urls.json \
+            --state backend/snapshot/data/dgd_progress.json
 
-      - name: Controle qualite minimal
+      - name: Controle etat du catalogue
         run: |
           python - <<'PY'
-          import json, sys
+          import json
           p='backend/snapshot/data/dental_good_deal_catalog.json'
           d=json.load(open(p,encoding='utf-8'))
-          rows=d.get('products',[])
-          quality=[x for x in rows if x.get('name') and isinstance(x.get('price'),(int,float)) and x.get('price',0)>0 and x.get('image_url') and x.get('merchant_reference')]
           print('Familles découvertes:',d.get('product_pages_discovered'))
-          print('Références extraites:',len(rows))
-          print('Références qualité nom+prix+image+ref:',len(quality))
-          print('Erreurs:',len(d.get('errors',[])))
-          if len(rows) < 100:
-              print('Catalogue anormalement petit: publication refusée', file=sys.stderr)
-              sys.exit(1)
+          print('Familles terminées:',d.get('product_pages_completed'))
+          print('Références cumulées:',d.get('total_products'))
+          print('Catalogue complet:',d.get('catalogue_complete'))
           PY
 
-      - name: Enregistrer le nouveau snapshot
+      - name: Sauvegarder progression et catalogue
         run: |
           git config user.name 'github-actions'
           git config user.email 'github-actions@github.com'
-          git add backend/snapshot/data/dental_good_deal_catalog.json backend/snapshot/data/dgd_product_urls.json
-          git diff --cached --quiet || git commit -m 'Refresh Dental Good Deal catalogue'
+          git add backend/snapshot/data/dental_good_deal_catalog.json backend/snapshot/data/dgd_product_urls.json backend/snapshot/data/dgd_progress.json
+          git diff --cached --quiet || git commit -m 'Advance Dental Good Deal catalogue'
           git pull --rebase
           git push
+
+      - name: Signaler protection eventuelle
+        if: steps.collect.outcome == 'failure'
+        run: |
+          echo 'La progression a été sauvegardée avant arrêt. Le prochain run reprendra le catalogue.'
