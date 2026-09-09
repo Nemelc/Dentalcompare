@@ -1,0 +1,35 @@
+name: Refresh public catalogues
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/snapshot/incoming/**"
+      - "backend/snapshot/refresh_public_catalogs.py"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Nettoyer et regenerer les catalogues publics
+        run: python backend/snapshot/refresh_public_catalogs.py
+
+      - name: Enregistrer les catalogues publics
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add gacd_catalog_visible.json mega_catalog_visible_test.json backend/snapshot/data/last_refresh_report.json
+          git diff --cached --quiet || git commit -m "Refresh public DentalCompare catalogues"
+          git push
