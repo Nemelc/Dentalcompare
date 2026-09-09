@@ -18,7 +18,7 @@ concurrency:
 jobs:
   refresh-dgd:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - name: Recuperer le depot
         uses: actions/checkout@v4
@@ -34,11 +34,20 @@ jobs:
 
       - name: Recuperer le catalogue public Dental Good Deal
         run: |
-          python backend/snapshot/dental_good_deal_catalog.py \
-            --workers 10 \
-            --max-pages 220 \
-            --output backend/snapshot/data/dental_good_deal_catalog.json \
-            --urls-out backend/snapshot/data/dgd_product_urls.json
+          if [ -f backend/snapshot/data/dgd_product_urls.json ]; then
+            python backend/snapshot/dental_good_deal_catalog.py \
+              --workers 12 \
+              --urls-file backend/snapshot/data/dgd_product_urls.json \
+              --output backend/snapshot/data/dental_good_deal_catalog.json \
+              --urls-out backend/snapshot/data/dgd_product_urls.json
+          else
+            python backend/snapshot/dental_good_deal_catalog.py \
+              --workers 12 \
+              --discover-workers 8 \
+              --max-pages 220 \
+              --output backend/snapshot/data/dental_good_deal_catalog.json \
+              --urls-out backend/snapshot/data/dgd_product_urls.json
+          fi
 
       - name: Controle qualite minimal
         run: |
@@ -63,4 +72,5 @@ jobs:
           git config user.email 'github-actions@github.com'
           git add backend/snapshot/data/dental_good_deal_catalog.json backend/snapshot/data/dgd_product_urls.json
           git diff --cached --quiet || git commit -m 'Refresh Dental Good Deal catalogue'
+          git pull --rebase
           git push
