@@ -1,0 +1,59 @@
+name: Test Dental Good Deal fast collector
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-dgd-fast.yml'
+      - 'backend/snapshot/dental_good_deal_catalog.py'
+
+permissions:
+  contents: read
+
+jobs:
+  test-dgd-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer les dependances
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Tester la decouverte et 8 fiches
+        run: |
+          python backend/snapshot/dental_good_deal_catalog.py \
+            --workers 4 \
+            --max-pages 8 \
+            --limit 8 \
+            --output backend/snapshot/data/dgd_test_catalog.json \
+            --urls-out backend/snapshot/data/dgd_test_urls.json
+
+      - name: Afficher le resume
+        run: |
+          python - <<'PY'
+          import json
+          p='backend/snapshot/data/dgd_test_catalog.json'
+          d=json.load(open(p,encoding='utf-8'))
+          print('pages_discovered=', d['product_pages_discovered'])
+          print('pages_attempted=', d['product_pages_attempted'])
+          print('total_products=', d['total_products'])
+          print('errors=', len(d['errors']))
+          for x in d['products'][:5]:
+              print(x['merchant_reference'], x['name'], x['price'], x['availability'], x['manufacturer_reference'])
+          PY
+
+      - name: Conserver le fichier test
+        uses: actions/upload-artifact@v4
+        with:
+          name: dgd-fast-test
+          path: |
+            backend/snapshot/data/dgd_test_catalog.json
+            backend/snapshot/data/dgd_test_urls.json
