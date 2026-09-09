@@ -53,9 +53,11 @@
       if(!g&&r){const candidates=byMfr.get(r)||[];g=candidates.find(x=>accepts(x,o)&&(!b||!normBrand(x.brand)||b===normBrand(x.brand)))||null;}
       if(!g){
         const counts=new Map();tokens(o.name).forEach(t=>(byToken.get(t)||[]).forEach(x=>counts.set(x,(counts.get(x)||0)+1)));
-        let best=null,bestScore=0;
-        counts.forEach((_,x)=>{if(!accepts(x,o))return;const s=similarity(o.name,x.name);if(s>bestScore){best=x;bestScore=s;}});
-        if(bestScore>=0.58)g=best;
+        let best=null,bestCommon=0,bestScore=0;
+        counts.forEach((common,x)=>{if(!accepts(x,o))return;const s=similarity(o.name,x.name);if(common>bestCommon||(common===bestCommon&&s>bestScore)){best=x;bestCommon=common;bestScore=s;}});
+        // Choix produit assumé : deux mots significatifs communs suffisent,
+        // même lorsque les libellés, marques ou conditionnements divergent.
+        if(bestCommon>=2)g=best;
       }
       if(!g){g=makeGroup(o,'p'+(groups.length+1));groups.push(g);index(g);}
       else if(!g.offers.some(x=>x.merchant===o.merchant&&ref(x.merchantReference)===ref(o.merchantReference))){g.offers.push(o);if(!g.image)g.image=o.image;index(g);}
