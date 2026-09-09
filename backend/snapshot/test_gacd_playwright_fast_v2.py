@@ -21,7 +21,7 @@ class GacdPlaywrightV2Test(unittest.TestCase):
         self.assertEqual(valid_ref('ABC-123'), 'ABC-123')
         self.assertEqual(valid_ref('Référence'), '')
 
-    def test_listing_is_promoted_to_pending_product(self):
+    def test_url_can_be_listing_and_pending_product(self):
         with TemporaryDirectory() as tmp:
             old_data, old_db = gacd.DATA, gacd.DB
             try:
@@ -30,9 +30,13 @@ class GacdPlaywrightV2Test(unittest.TestCase):
                 store = gacd.Store()
                 url = 'https://www.gacd.fr/produit-test.html'
                 store.add({url}, 'listing')
-                store.done(url)
+                store.done(url, 'listing')
                 store.add({url}, 'product')
                 self.assertEqual(store.next('product'), url)
+                states = store.db.execute(
+                    'SELECT kind,status FROM queue WHERE url=? ORDER BY kind', (url,)
+                ).fetchall()
+                self.assertEqual(states, [('listing', 'done'), ('product', 'pending')])
                 store.db.close()
             finally:
                 gacd.DATA, gacd.DB = old_data, old_db
