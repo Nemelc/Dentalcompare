@@ -1,17 +1,12 @@
 {
   "source": "dentaltix_public_resumable_v2",
-  "captured_at": "2026-10-19T10:15:11.434696+00:00",
+  "captured_at": "2026-10-26T10:26:49.477543+00:00",
   "product_pages_discovered": 4825,
-  "product_pages_completed": 2094,
+  "product_pages_completed": 2394,
   "discovery_complete": false,
   "catalogue_complete": false,
   "total_products": 7378,
-  "errors": [
-    {
-      "url": "https://www.dentaltix.com/fr/carl-martin/633-ecarteur-minnesota",
-      "error": "404 Client Error: Not Found for url: https://www.dentaltix.com/fr/carl-martin/633-ecarteur-minnesota"
-    }
-  ],
+  "errors": [],
   "products": [
     {
       "merchant": "Dentaltix",
